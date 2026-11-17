@@ -193,6 +193,11 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
 .coderow { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .coderow input { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px; width: 100%; min-width: 0; font-family: var(--f-num); }
 .coderow button { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 8px 10px; color: var(--danger); }
+.camgo { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.camwrap { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-width: 100%; }
+.camwrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.camline { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: #ff4d4d; box-shadow: 0 0 8px #ff4d4d; }
+.camwrap::after { content: ""; position: absolute; inset: 22% 6%; border: 2px solid rgb(255 255 255 / .8); border-radius: 10px; }
 .toast-undo { margin-left: 12px; border: 0; background: var(--money); color: #1b1404; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); z-index: 40; background: var(--ink); color: var(--bg);
   padding: 12px 18px; border-radius: 12px; max-width: calc(100% - 32px); font-weight: 700; text-align: center; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
@@ -227,6 +232,7 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
         <div class="view">
           <p class="hint" id="saisieHelp"></p>
           <div class="srow"><input type="search" class="search" id="q" placeholder="Chercher un produit" aria-label="Chercher un produit" autocomplete="off"><button class="kbtn" data-vkb="q" aria-label="Afficher le clavier" aria-pressed="false">⌨</button></div>
+          <button class="btn primary camgo" id="camOpen" type="button"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Scanner avec l'appareil photo</span></button>
           <div class="vkb" data-vkb-for="q" hidden></div>
           <div class="cats" id="cats" role="toolbar" aria-label="Rayons"></div>
           <div class="grid" id="grid"></div>
@@ -262,7 +268,7 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
         <div class="field"><span class="label">Codes-barres reliés</span>
           <p class="hint">Un produit peut avoir plusieurs codes, par exemple un par client. Pour une étiquette de balance, mets seulement les 7 premiers chiffres.</p>
           <div class="list" id="pCodes"></div>
-          <button class="btn" id="pAddCode" type="button">+ Ajouter un code-barres</button>
+          <div class="row"><button class="btn" id="pAddCode" type="button">+ Ajouter un code-barres</button><button class="btn" id="pScanCode" type="button">Scanner un code</button></div>
         </div>
         <div class="row">
           <button class="btn primary" id="pSave">Ajouter</button>
@@ -324,6 +330,15 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
     <div class="field"><label class="label" for="syUrl">Adresse du tableau (Apps Script) ou lien de réglage</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="field"><label class="label" for="syCode">Code secret</label><input id="syCode" placeholder="le même sur chaque téléphone" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="row"><button class="btn primary" id="sySave">Enregistrer</button><button class="btn" id="syNow">Synchroniser maintenant</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sCam" hidden>
+  <div class="panel">
+    <div class="sheet-head"><h2>Scanner le gencod</h2><button class="x" id="camClose" aria-label="Fermer">×</button></div>
+    <div class="camwrap"><video id="camVideo" playsinline muted autoplay></video><div class="camline" aria-hidden="true"></div></div>
+    <p class="hint" id="camHint">Place le code-barres dans le cadre, bien à plat et éclairé. Le scan se fait tout seul.</p>
+    <button class="btn" id="camTorch" type="button" hidden>Allumer la lampe</button>
   </div>
 </div>
 
@@ -747,6 +762,84 @@ function handleScan(code) {
   if (!f) { openScanPick(code, key); return; }
   openEntry(f.p, code, f.price);
 }
+/* ---------- camera scan: same codes as the Bluetooth scanner, read on the phone itself (works offline) ---------- */
+const CAM = { stream: null, timer: 0, busy: false, detector: null, zx: null, canvas: document.createElement("canvas"), onCode: null, last: "" };
+function loadZxing() {
+  if (window.ZXing) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = "zxing.min.js"; s.onload = res; s.onerror = rej; document.head.append(s); });
+}
+async function camDecoder() {
+  if (CAM.detector || CAM.zx) return;
+  try {
+    if ("BarcodeDetector" in window) {
+      const f = await BarcodeDetector.getSupportedFormats();
+      if (f.includes("ean_13")) { CAM.detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"].filter(x => f.includes(x)) }); return; }
+    }
+  } catch {}
+  await loadZxing();
+  const Z = window.ZXing, hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128]);
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  CAM.zx = new Z.MultiFormatReader(); CAM.zx.setHints(hints);
+}
+async function camStart(onCode) {
+  CAM.onCode = onCode; CAM.last = "";
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast("Cet appareil ne donne pas accès à l'appareil photo ici.", 4000); return; }
+  openSheet("sCam"); $("#camHint").textContent = "Ouverture de l'appareil photo…"; $("#camTorch").hidden = true;
+  try {
+    await camDecoder();
+    CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  } catch (e) {
+    camStop();
+    toast(e && e.name === "NotAllowedError" ? "Accès à l'appareil photo refusé. Autorise-le dans les réglages du téléphone pour cette appli." : "Impossible d'ouvrir l'appareil photo.", 5000);
+    return;
+  }
+  const v = $("#camVideo"); v.srcObject = CAM.stream; try { await v.play(); } catch {}
+  $("#camHint").textContent = "Place le code-barres dans le cadre, bien à plat et éclairé. Le scan se fait tout seul.";
+  try { const tr = CAM.stream.getVideoTracks()[0], cap = tr.getCapabilities ? tr.getCapabilities() : {}; if (cap.torch) { $("#camTorch").hidden = false; CAM.torch = false; } } catch {}
+  CAM.timer = setInterval(camTick, 180);
+}
+async function camTick() {
+  const v = $("#camVideo"); if (CAM.busy || !CAM.stream || v.readyState < 2 || !v.videoWidth) return;
+  CAM.busy = true;
+  try {
+    /* read the middle band of the picture, where the frame is */
+    const w = v.videoWidth, h = v.videoHeight, c = CAM.canvas, sh = Math.round(h * 0.56), sy = Math.round((h - sh) / 2);
+    c.width = w; c.height = sh; c.getContext("2d", { willReadFrequently: true }).drawImage(v, 0, sy, w, sh, 0, 0, w, sh);
+    let code = "";
+    if (CAM.detector) { const r = await CAM.detector.detect(c); if (r && r.length) code = r[0].rawValue; }
+    else if (CAM.zx) {
+      const Z = window.ZXing;
+      try { code = CAM.zx.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c)))).getText(); } catch {}
+    }
+    code = String(code || "").replace(/\s/g, "");
+    if (code && /^\d{8,14}$/.test(code)) {
+      /* a 13-digit code must pass its check digit before we trust it */
+      if (code.length === 13 && !eanOk(code)) return;
+      if (code === CAM.last) return;
+      CAM.last = code;
+      if (navigator.vibrate) try { navigator.vibrate(60); } catch {}
+      const cb = CAM.onCode; camStop(); closeSheets(); if (cb) cb(code);
+    }
+  } catch {} finally { CAM.busy = false; }
+}
+function camStop() {
+  clearInterval(CAM.timer); CAM.timer = 0;
+  if (CAM.stream) { CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; }
+  const v = $("#camVideo"); if (v) v.srcObject = null;
+}
+$("#camClose").addEventListener("click", () => { camStop(); closeSheets(); });
+$("#sCam").addEventListener("click", e => { if (e.target.id === "sCam") camStop(); });
+$("#camTorch").addEventListener("click", async () => { try { CAM.torch = !CAM.torch; await CAM.stream.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: CAM.torch }] }); $("#camTorch").textContent = CAM.torch ? "Éteindre la lampe" : "Allumer la lampe"; } catch {} });
+$("#camOpen").addEventListener("click", () => camStart(code => handleScan(code)));
+$("#pScanCode").addEventListener("click", () => camStart(code => {
+  const key = /^2\d{12}$/.test(code) ? code.slice(0, 7) : code;
+  if (S.fCodes.some(c => c.ean === key)) { toast("Ce code est déjà relié à ce produit"); return; }
+  const other = findCode(key); if (other && other.p.id !== S.editing) toast("Attention : ce code est déjà relié à " + other.p.name, 5000);
+  S.fCodes.push({ ean: key }); renderCodes(); toast("Code " + key + " ajouté. Touche Enregistrer pour le garder.", 4000);
+}));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && CAM.stream) { camStop(); closeSheets(); } });
+
 let scanPending = null;
 function openScanPick(code, key) {
   scanPending = { code, key };
