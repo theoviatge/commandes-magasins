@@ -1039,26 +1039,29 @@ function xlsxBlob(sheets) {
 $("#bXlsx").onclick = async () => {
   const P = period(), list = bilanLines(), tree = bilanTree(list), r3 = k => k ? Math.round(k * 1000) / 1000 : null;
   const title = "Bilan " + P.label + (S.bClient ? " · " + S.bClient : "");
-  /* un onglet pour les ventes (livraisons), un onglet pour les retours, puis le détail */
-  const part = (q, k, lbl) => {
-    const rows = [[title + " · " + lbl], [], ["Client", "Produit", "Lot", "Quantité", "Poids (kg)"]], bold = [0, 2];
-    tree.forEach(C => {
-      let any = false, cq = 0, ck = 0;
-      C.prods.forEach(Pr => {
-        const lots = Pr.lots.filter(x => x[q] || x[k]); if (!lots.length) return;
-        lots.forEach(x => { rows.push([C.name, Pr.name, String(x.lot), x[q], r3(x[k])]); cq += x[q]; ck += x[k] || 0; });
-        if (lots.length > 1) { bold.push(rows.length); rows.push([C.name, "Total " + Pr.name, "", lots.reduce((s, x) => s + x[q], 0), r3(lots.reduce((s, x) => s + (x[k] || 0), 0))]); }
-        any = true;
-      });
-      if (any) { bold.push(rows.length); rows.push(["Total " + C.name, "", "", cq, r3(ck)]); rows.push([]); }
+  /* deux feuilles par client : une pour les ventes (livraisons), une pour les retours */
+  const used = new Set();
+  const sheetName = (client, lbl) => {
+    const base = String(client).replace(/[\[\]:*?\/\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 31 - lbl.length - 3) || "Client";
+    let n = base + " - " + lbl, i = 2; while (used.has(n.toLowerCase())) n = base.slice(0, 27 - lbl.length) + " " + i++ + " - " + lbl;
+    used.add(n.toLowerCase()); return n;
+  };
+  const part = (C, q, k, lbl) => {
+    const rows = [[C.name + " · " + lbl + " · " + P.label], [], ["Produit", "Lot", "Quantité", "Poids (kg)"]], bold = [0, 2];
+    let cq = 0, ck = 0;
+    C.prods.forEach(Pr => {
+      const lots = Pr.lots.filter(x => x[q] || x[k]); if (!lots.length) return;
+      lots.forEach(x => { rows.push([Pr.name, String(x.lot), x[q], r3(x[k])]); cq += x[q]; ck += x[k] || 0; });
+      if (lots.length > 1) { bold.push(rows.length); rows.push(["Total " + Pr.name, "", lots.reduce((s, x) => s + x[q], 0), r3(lots.reduce((s, x) => s + (x[k] || 0), 0))]); }
     });
     if (rows.length === 3) rows.push([lbl === "Ventes" ? "Aucune vente sur cette période" : "Aucun retour sur cette période"]);
-    return { rows, bold };
+    else { rows.push([]); bold.push(rows.length); rows.push(["TOTAL " + lbl.toUpperCase(), "", cq, r3(ck)]); }
+    return { name: sheetName(C.name, lbl), rows, bold, cols: [36, 12, 11, 13] };
   };
-  const V = part("vq", "vk", "Ventes"), R = part("rq", "rk", "Retours");
-  const detail = [["Date", "Heure", "Client", "Type", "Produit", "Lot", "Quantité", "Poids (kg)", "Code-barres"]];
-  list.slice().sort((a, b) => (a.day + a.at).localeCompare(b.day + b.at)).forEach(l => detail.push([l.day, hhmm(l.at), l.client, LABEL[l.type] || l.type, l.name, String(l.lot), l.qty, r3(l.kg), l.code || ""]));
-  const blob = xlsxBlob([{ name: "Ventes", rows: V.rows, bold: V.bold, cols: [22, 34, 12, 11, 13] }, { name: "Retours", rows: R.rows, bold: R.bold, cols: [22, 34, 12, 11, 13] }, { name: "Détail", rows: detail, bold: [0], cols: [12, 8, 22, 9, 34, 12, 10, 11, 16] }]);
+  const sheets = [];
+  tree.forEach(C => sheets.push(part(C, "vq", "vk", "Ventes"), part(C, "rq", "rk", "Retours")));
+  if (!sheets.length) { toast("Rien à exporter sur cette période", 3000); return; }
+  const blob = xlsxBlob(sheets);
   const fn = ["bilan", P.file, S.bClient ? slug(S.bClient) : ""].filter(Boolean).join("_") + ".xlsx";
   try { await S.downloads.save({ filename: fn, data: blob }); }
   catch (e) { if (e && e.code !== "declined") toast("Téléchargement impossible ici"); }
