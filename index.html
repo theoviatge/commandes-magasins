@@ -321,7 +321,7 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
     <div class="sheet-head"><h2>Synchronisation</h2><button class="x" data-close aria-label="Fermer">×</button></div>
     <p class="hint">Tout est enregistré sur ce téléphone, même sans réseau. Dès qu'il y a internet, l'appli envoie les saisies au tableau Google Sheets et récupère celles des autres téléphones, toute seule.</p>
     <p class="hint" id="syInfo"></p>
-    <div class="field"><label class="label" for="syUrl">Adresse du tableau (Apps Script)</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label class="label" for="syUrl">Adresse du tableau (Apps Script) ou lien de réglage</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="field"><label class="label" for="syCode">Code secret</label><input id="syCode" placeholder="le même sur chaque téléphone" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="row"><button class="btn primary" id="sySave">Enregistrer</button><button class="btn" id="syNow">Synchroniser maintenant</button></div>
   </div>
@@ -1196,6 +1196,8 @@ function renderSyncSheet() {
 }
 $("#syncBtn").addEventListener("click", () => { $("#syUrl").value = ST.url; $("#syCode").value = ST.code; renderSyncSheet(); openSheet("sSync"); });
 $("#sySave").addEventListener("click", () => {
+  /* the whole setup link can be pasted in the address field: it carries the address and the code */
+  { const v = $("#syUrl").value.trim(), i = v.indexOf("#synchro="); if (i >= 0) { const p = new URLSearchParams(v.slice(i + 1)); $("#syUrl").value = (p.get("synchro") || "").trim(); if (p.get("code")) $("#syCode").value = p.get("code").trim(); } }
   const u = $("#syUrl").value.trim();
   if (u && !/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[^/]+\/exec$/.test(u)) { toast("Il faut l'adresse de l'application Web : https://script.google.com/macros/s/…/exec (pas celle de l'éditeur)", 6000); return; }
   if (u !== ST.url) ST.lastSrv = 0;
@@ -1214,8 +1216,19 @@ const localDownloads = {
 
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) { window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); }); }
 
+/* setup link: …/#synchro=<adresse /exec>&code=<code> fills the sync settings once, then is removed from the address bar */
+function setupFromLink() {
+  const h = location.hash.slice(1); if (!h.includes("synchro=")) return false;
+  const p = new URLSearchParams(h), u = (p.get("synchro") || "").trim(), c = (p.get("code") || "").trim();
+  try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+  if (!/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[^/]+\/exec$/.test(u) || !c) return false;
+  if (u !== ST.url) ST.lastSrv = 0;
+  ST.url = u; ST.code = c; ST.lastErr = ""; persist();
+  return true;
+}
 async function boot() {
   await loadStore(); seedProducts();
+  if (setupFromLink()) setTimeout(() => toast("Synchro réglée sur ce téléphone, récupération des clients et produits…", 4000), 300);
   S.db = localDb; S.downloads = localDownloads; S.uid = ST.device; S.dbState = "ok";
   subscribeProducts(); subscribeClients(); subscribeLots(); subscribeLines(); renderAll(); flush(); syncClients();
   if (!ST.url) showBanner("Appli prête, tout est gardé sur ce téléphone. Pour partager entre téléphones, touche « Synchro à régler » en haut.");
