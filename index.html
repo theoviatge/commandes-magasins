@@ -630,7 +630,7 @@ function renderLotChoices() {
   if (list.length) { const n = el("button", "btn", "+ Nouveau lot"); n.type = "button"; n.style.padding = "10px"; n.onclick = () => { $("#eLot").value = ""; S.kpField = "eLot"; renderEntry(); }; box.append(n); }
 }
 /* prix au kilo de la caisse, servent seulement à retrouver le poids écrit dans l'étiquette de balance (jamais affichés) */
-const PRICE_KG = {"cana-aiguillettes-de-canard":2500,"cana-canard-sans-foie":550,"cana-cote-de-canard":2500,"cana-cou-farci-au-foie-gras":7000,"cana-foie-gras-frais-deveine":5200,"cana-foie-gras-frais":4700,"cana-foie-gras-mi-cuit-boule":8900,"cana-foie-gras-mi-cuit-tranche":9900,"cana-foie-gras-mi-cuit":8900,"cana-friton-de-canard":1995,"cana-gesiers-de-canard-confits":2400,"cana-magret-frais":2300,"cana-rillettes-de-canard":1995,"cana-steak-de-canard":2500,"char-andouilles":970,"char-boudin-a-la-viande":980,"char-carbonnade":1400,"char-chair-a-saucisse":895,"char-chipolatas-sechees":2500,"char-chipolatas":1160,"char-confit-de-cochon":1095,"char-coppa":2995,"char-cotelettes-de-porc":995,"char-filet-mignon":1800,"char-galantine-de-volaille":1550,"char-jambon-blanc":1900,"char-jambon-de-pays-en-tranche":2500,"char-jambon-de-pays-entier-avec-os":1000,"char-jambon-de-pays-entier-desosse":1450,"char-jarret-de-porc":600,"char-joue-de-porc-confit":2295,"char-langue-de-porc-confit":1695,"char-magret-seche-entier":3995,"char-magret-seche-pretranche":5300,"char-pate-de-campagne":1090,"char-pate-de-canard":1630,"char-pate-de-porc-au-foie-gras":2000,"char-pied-de-porc":130,"char-poitrine-de-porc-tranchee":1200,"char-preparation-type-merguez-sechees":2500,"char-preparation-type-merguez":1160,"char-quart-de-jambon-de-pays":1950,"char-roti-de-porc":1095,"char-saucisse-de-canard":1500,"char-saucisse-de-porc-au-foie-gras":1710,"char-saucisse-pur-porc-fine":1160,"char-saucisse-pur-porc":995,"char-saucisse-seche-de-canard":2500,"char-saucisse-seche-de-foie":2200,"char-saucisse-seche-de-porc":2200,"char-saucisson-de-canard":2500,"char-saucisson-de-porc":2300,"char-talon-de-jambon-de-pays":1160,"char-travers-de-porc":850,"char-ventreche-plate-ou-roulee":1895,"noel-chapon-eviscere-avec-abats":1395,"noel-oie-evisceree-avec-abats":1430,"noel-roti-de-chapon-farci":2995,"noel-roti-de-magrets-fourre-au-foie-gras":2995,"vola-blanc-de-poulet":2090,"vola-cane-evisceree-avec-abats":865,"vola-cuisse-de-pintade":1690,"vola-cuisse-de-poulet":1250,"vola-pintade-evisceree-avec-abats":1095,"vola-poulet-eviscere-avec-abats":795,"vola-supreme-de-pintade":2090};
+const PRICE_KG = {"char-talon-de-jambon-blanc":1095,"cana-aiguillettes-de-canard":2500,"cana-canard-sans-foie":550,"cana-cote-de-canard":2500,"cana-cou-farci-au-foie-gras":7000,"cana-foie-gras-frais-deveine":5200,"cana-foie-gras-frais":4700,"cana-foie-gras-mi-cuit-boule":8900,"cana-foie-gras-mi-cuit-tranche":9900,"cana-foie-gras-mi-cuit":8900,"cana-friton-de-canard":1995,"cana-gesiers-de-canard-confits":2400,"cana-magret-frais":2300,"cana-rillettes-de-canard":1995,"cana-steak-de-canard":2500,"char-andouilles":970,"char-boudin-a-la-viande":980,"char-carbonnade":1400,"char-chair-a-saucisse":895,"char-chipolatas-sechees":2500,"char-chipolatas":1160,"char-confit-de-cochon":1095,"char-coppa":2995,"char-cotelettes-de-porc":995,"char-filet-mignon":1800,"char-galantine-de-volaille":1550,"char-jambon-blanc":1900,"char-jambon-de-pays-en-tranche":2500,"char-jambon-de-pays-entier-avec-os":1000,"char-jambon-de-pays-entier-desosse":1450,"char-jarret-de-porc":600,"char-joue-de-porc-confit":2295,"char-langue-de-porc-confit":1695,"char-magret-seche-entier":3995,"char-magret-seche-pretranche":5300,"char-pate-de-campagne":1090,"char-pate-de-canard":1630,"char-pate-de-porc-au-foie-gras":2000,"char-pied-de-porc":130,"char-poitrine-de-porc-tranchee":1200,"char-preparation-type-merguez-sechees":2500,"char-preparation-type-merguez":1160,"char-quart-de-jambon-de-pays":1950,"char-roti-de-porc":1095,"char-saucisse-de-canard":1500,"char-saucisse-de-porc-au-foie-gras":1710,"char-saucisse-pur-porc-fine":1160,"char-saucisse-pur-porc":995,"char-saucisse-seche-de-canard":2500,"char-saucisse-seche-de-foie":2200,"char-saucisse-seche-de-porc":2200,"char-saucisson-de-canard":2500,"char-saucisson-de-porc":2300,"char-talon-de-jambon-de-pays":1160,"char-travers-de-porc":850,"char-ventreche-plate-ou-roulee":1895,"noel-chapon-eviscere-avec-abats":1395,"noel-oie-evisceree-avec-abats":1430,"noel-roti-de-chapon-farci":2995,"noel-roti-de-magrets-fourre-au-foie-gras":2995,"vola-blanc-de-poulet":2090,"vola-cane-evisceree-avec-abats":865,"vola-cuisse-de-pintade":1690,"vola-cuisse-de-poulet":1250,"vola-pintade-evisceree-avec-abats":1095,"vola-poulet-eviscere-avec-abats":795,"vola-supreme-de-pintade":2090};
 function labelKg(p, code, perKg) {
   if (!/^2\d{12}$/.test(code || "")) return null;
   const cents = parseInt(code.slice(7, 12), 10), pk = perKg || p.price || PRICE_KG[p.id] || 0;
@@ -1218,13 +1218,20 @@ function query(col, where) {
 const localDb = { collection: c => query(c, []) };
 
 /* first launch: the catalogue copied from the Caisse du stand */
+/* produits ajoutés après coup : arrivent aussi sur les téléphones déjà installés (une seule fois) */
+const EXTRA = [{ id: "char-talon-de-jambon-blanc", name: "Talon de jambon blanc", unit: "kg", cat: "Charcuterie cuite", color: 5, codes: [] }];
+function addExtras() {
+  let ch = false;
+  EXTRA.forEach(p => { const k = K("products", p.id); if (ST.recs[k]) return; const { id, ...d } = p; ST.recs[k] = { col: "products", id, data: d, updatedAt: 2, deleted: false, dirty: true }; ch = true; });
+  if (ch) persist();
+}
 function seedProducts() {
-  if (ST.seeded) return;
+  if (ST.seeded) { addExtras(); return; }
   ST.seeded = true;
   if (!Object.values(ST.recs).some(r => r.col === "products")) {
     SEED.forEach(p => { const { id, ...d } = p; ST.recs[K("products", id)] = { col: "products", id, data: d, updatedAt: 1, deleted: false, dirty: false, seed: true }; });
   }
-  persist();
+  addExtras(); persist();
 }
 
 /* ---------- sync with the Google Sheet (Apps Script web app) ---------- */
