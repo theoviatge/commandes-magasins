@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Commandes magasins</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5f8b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Commandes">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;-webkit-text-size-adjust:100%}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: same one-screen phone app as the Caisse du stand. Striped header, scrolling middle, tab bar at the bottom, sheets slide up. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #16283a;
+  --muted: #5d6b78;
+  --line: #d3dbe3;
+  --accent: #1f5f8b;
+  --accent-ink: #ffffff;
+  --ret: #b4542f;
+  --ret-soft: #f8e4da;
+  --money: #c98a0c;
+  --money-soft: #fbf0d6;
+  --danger: #b4372f;
+  --stripe: #ffffff;
+  --t0: #2f7d5c; --t1: #c98a0c; --t2: #3b6ea8; --t3: #a3455f; --t4: #6b5aa6; --t5: #50707a;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f171e; --surface: #17222c; --ink: #e4ecf2; --muted: #97a7b4; --line: #2a3946;
+  --accent: #5aa6dc; --accent-ink: #07121b; --ret: #ec8a62; --ret-soft: #3a2218; --money: #f0b740; --money-soft: #3a2f14; --danger: #ef7a70; --stripe: #17222c;
+  --t0: #3f9c74; --t1: #c89423; --t2: #4f86c4; --t3: #c0607b; --t4: #8673c4; --t5: #688d98;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f171e; --surface: #17222c; --ink: #e4ecf2; --muted: #97a7b4; --line: #2a3946;
+  --accent: #5aa6dc; --accent-ink: #07121b; --ret: #ec8a62; --ret-soft: #3a2218; --money: #f0b740; --money-soft: #3a2f14; --danger: #ef7a70; --stripe: #17222c;
+  --t0: #3f9c74; --t1: #c89423; --t2: #4f86c4; --t3: #c0607b; --t4: #8673c4; --t5: #688d98;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.4 var(--f-body); overflow: hidden; }
+* { box-sizing: border-box; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--money); outline-offset: 2px; }
+.g { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+#app { height: 100%; display: flex; flex-direction: column; }
+body.retour { --accent: var(--ret); }
+
+.awning-bar { height: 16px; flex: none; background: repeating-linear-gradient(90deg, var(--accent) 0 26px, var(--stripe) 26px 52px); }
+.awning { height: 11px; flex: none; background: radial-gradient(circle at 13px 0, var(--accent) 11px, transparent 11.5px) 0 0/52px 11px repeat-x, radial-gradient(circle at 39px 0, var(--surface) 11px, transparent 11.5px) 0 0/52px 11px repeat-x; }
+header.top { flex: none; background: var(--bg); }
+.top-row { display: flex; align-items: center; gap: 10px; padding-block: 8px 10px; }
+.top-row h1 { font: 800 1.3rem/1 var(--f-display); margin: 0; letter-spacing: -0.01em; flex: 1; min-width: 0; text-wrap: balance; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--t0); flex: none; }
+.dot.pending { background: var(--money); animation: pulse 1s infinite alternate; }
+.syncbtn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: .85rem; max-width: 55%; }
+.syncbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot.off { background: var(--danger); }
+@keyframes pulse { to { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .dot.pending { animation: none; } }
+
+main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-block: 4px 16px; }
+.view { display: flex; flex-direction: column; gap: 14px; }
+.banner { background: var(--money-soft); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.banner.err { border-left: 4px solid var(--danger); }
+
+.modehead { display: flex; align-items: baseline; gap: 10px; }
+.modehead h2 { margin: 0; font: 800 1.5rem/1 var(--f-display); color: var(--accent); flex: 1; }
+.cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.cats button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: .92rem; }
+.cats button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.clients button { padding: 9px 16px; font-weight: 700; }
+.clients button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.clients button.add { border-style: dashed; font-weight: 400; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 44vw), 1fr)); gap: 10px; }
+.tile { position: relative; text-align: left; border: 0; border-radius: 12px; background: var(--surface); padding: 12px 12px 10px 16px; min-height: 78px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 6px; box-shadow: inset 5px 0 0 var(--tc, var(--t0)); transition: transform .08s; -webkit-tap-highlight-color: transparent; }
+.tile:active { transform: scale(.97); }
+.tile .nm { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.tile .pr { font-size: .8rem; color: var(--muted); font-family: var(--f-num); }
+.tile .q { position: absolute; top: 8px; right: 8px; min-width: 26px; height: 26px; border-radius: 13px; background: var(--accent); color: var(--accent-ink); font: 600 .85rem/26px var(--f-num); text-align: center; padding: 0 6px; }
+.search { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 14px; width: 100%; min-width: 0; }
+.srow { display: flex; gap: 8px; }
+.srow .search { flex: 1; min-width: 0; }
+.kbtn { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; width: 48px; font-size: 1.2rem; }
+.kbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.vkb { display: flex; flex-direction: column; gap: 6px; }
+.vkb div { display: flex; gap: 4px; justify-content: center; }
+.vkb button { flex: 1 1 0; min-width: 0; max-width: 40px; border: 0; background: var(--surface); border-radius: 8px; padding: 12px 0; font: 600 1rem var(--f-body); box-shadow: 0 1px 0 var(--line); }
+.vkb button.wide { max-width: none; flex: 3 1 0; }
+.empty { color: var(--muted); text-align: center; padding: 22px 8px; border: 2px dashed var(--line); border-radius: 12px; }
+
+.cartbar { flex: none; padding-block: 8px; background: var(--bg); border-top: 1px solid var(--line); }
+.cartbar button { width: 100%; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); padding: 12px 16px; }
+.cartbar button.empty-bon { background: var(--line); color: var(--muted); }
+.cartbar .cnt { font-size: .95rem; flex: 1; text-align: left; }
+.cartbar .tot { font: 600 1.05rem/1 var(--f-num); }
+nav.tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border-top: 1px solid var(--line); padding-block: 4px; }
+nav.tabs button { border: 0; background: none; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .78rem; color: var(--muted); letter-spacing: .02em; }
+nav.tabs svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+nav.tabs button[aria-current="page"] { color: var(--accent); font-weight: 700; }
+
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; background: rgb(0 0 0 / .45); }
+.sheet .panel { background: var(--bg); border-radius: 18px 18px 0 0; max-height: 94%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  padding-top: 18px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+.sheet h2 { font: 800 1.3rem/1.1 var(--f-display); margin: 0; flex: 1; text-wrap: balance; }
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.x { border: 0; background: var(--surface); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; line-height: 1; }
+.tag { display: inline-block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+
+.efields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.efields .field.full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field input, .field select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 12px; width: 100%; min-width: 0; }
+.field input.big { font: 600 1.5rem var(--f-num); text-align: right; }
+.field input.big.on { border: 2px solid var(--accent); }
+.field input.lotin { text-align: center; letter-spacing: .05em; }
+.label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.keypad button { border: 0; background: var(--surface); border-radius: 12px; padding: 14px 0; font: 600 1.25rem var(--f-num); }
+.lots { display: flex; gap: 8px; flex-wrap: wrap; }
+.lots button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-family: var(--f-num); }
+.lotlist { display: flex; flex-direction: column; gap: 6px; }
+.lotc { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.lotc .pick { border: 2px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; text-align: left; font: 600 1.05rem var(--f-num); }
+.lotc .pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.lotc .end { border: 1px solid var(--line); background: none; border-radius: 10px; padding: 8px 12px; color: var(--danger); font-weight: 700; }
+.lotc .end.armed { background: var(--danger); color: #fff; border-color: var(--danger); }
+.hint { font-size: .86rem; color: var(--muted); margin: 0; }
+
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1 1 0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { border: 0; border-radius: 12px; padding: 14px 16px; font-weight: 700; background: var(--surface); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.danger { color: var(--danger); background: transparent; border: 1px solid currentColor; }
+.btn.danger.armed { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+.card { background: var(--surface); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card h3 { margin: 0; font: 600 1.05rem var(--f-display); }
+.rt-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: baseline; width: 100%; border: 0; background: none; padding: 7px 0; border-bottom: 1px dashed var(--line); text-align: left; }
+.rt-row .bv { font-family: var(--f-num); text-align: right; white-space: nowrap; }
+.rt-row.sub { font-weight: 700; border-bottom: 0; }
+.rt-items { display: flex; flex-direction: column; gap: 4px; padding: 4px 0 8px 10px; }
+.rt-it { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; font-size: .9rem; }
+.rt-it .bv { font-family: var(--f-num); }
+.rt-it button { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 4px 10px; color: var(--danger); }
+.rt-it button.armed { background: var(--danger); color: #fff; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.kpi { background: var(--surface); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi b { font: 600 1.15rem var(--f-num); }
+.kpi.v { box-shadow: inset 0 4px 0 var(--t2); }
+.kpi.r { box-shadow: inset 0 4px 0 var(--ret); }
+.kpi.n { box-shadow: inset 0 4px 0 var(--t0); }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 8px 16px; font-size: .92rem; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pnav { display: flex; align-items: center; gap: 8px; }
+.pnav button { border: 1px solid var(--line); background: var(--surface); border-radius: 50%; width: 40px; height: 40px; font-size: 1.1rem; flex: none; }
+.pnav b { flex: 1; text-align: center; font: 600 1.05rem var(--f-display); }
+.tbl { overflow-x: auto; }
+table.rec { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.rec th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; text-align: right; padding: 4px 0 6px 10px; white-space: nowrap; }
+table.rec th:first-child, table.rec td:first-child { text-align: left; padding-left: 0; }
+table.rec td { padding: 7px 0 7px 10px; border-bottom: 1px dashed var(--line); text-align: right; font-family: var(--f-num); white-space: nowrap; }
+table.rec td:first-child { font-family: var(--f-body); white-space: normal; }
+table.rec td.ret { color: var(--ret); }
+table.rec tr.pt td { font-weight: 700; border-bottom: 1px solid var(--line); }
+table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font-family: var(--f-body); }
+
+.prow { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 10px 12px; border: 0; width: 100%; text-align: left; }
+.prow .sw { width: 12px; height: 34px; border-radius: 4px; flex: none; }
+.prow .pn { flex: 1; min-width: 0; }
+.prow .pn small { display: block; color: var(--muted); }
+.coderow { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.coderow input { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px; width: 100%; min-width: 0; font-family: var(--f-num); }
+.coderow button { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 8px 10px; color: var(--danger); }
+.toast-undo { margin-left: 12px; border: 0; background: var(--money); color: #1b1404; border-radius: 8px; padding: 6px 10px; font-weight: 700; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); z-index: 40; background: var(--ink); color: var(--bg);
+  padding: 12px 18px; border-radius: 12px; max-width: calc(100% - 32px); font-weight: 700; text-align: center; box-shadow: 0 6px 24px rgb(0 0 0 / .25); }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="awning-bar"></div>
+    <div class="awning" aria-hidden="true"></div>
+    <div class="top-row g">
+      <h1>Commandes magasins</h1>
+      <button class="syncbtn" id="syncBtn" aria-label="Réglages de synchronisation"><i class="dot" id="syncDot"></i><span id="syncLbl">…</span></button>
+    </div>
+  </header>
+
+  <main class="g" id="main">
+    <div class="banner err" id="dbBanner" hidden></div>
+    <div class="banner" id="offBanner" role="status" hidden></div>
+
+    <section class="view" id="v-saisie">
+      <div class="modehead"><h2 id="modeTitle">Vente</h2><span class="label" id="modeSub"></span></div>
+      <div class="field"><span class="label">Client (magasin)</span><div class="cats clients" id="clientChips"></div></div>
+      <div class="field" id="addClientBox" hidden>
+        <div class="srow"><input id="newClient" class="search" maxlength="40" placeholder="Nom du magasin" autocomplete="off"><button class="kbtn" data-vkb="newClient" aria-label="Afficher le clavier" aria-pressed="false">⌨</button></div>
+        <div class="vkb" data-vkb-for="newClient" data-upper hidden></div>
+        <button class="btn primary" id="newClientOk">Ajouter ce client</button>
+      </div>
+      <div class="field"><label class="label" for="day">Date</label><input type="date" id="day"></div>
+      <div id="entryZone">
+        <div class="view">
+          <p class="hint" id="saisieHelp"></p>
+          <div class="srow"><input type="search" class="search" id="q" placeholder="Chercher un produit" aria-label="Chercher un produit" autocomplete="off"><button class="kbtn" data-vkb="q" aria-label="Afficher le clavier" aria-pressed="false">⌨</button></div>
+          <div class="vkb" data-vkb-for="q" hidden></div>
+          <div class="cats" id="cats" role="toolbar" aria-label="Rayons"></div>
+          <div class="grid" id="grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-bilan" hidden>
+      <div class="row" style="align-items:center">
+        <div class="seg" role="group" aria-label="Période" style="flex:none">
+          <button id="pDay" aria-pressed="false">Jour</button>
+          <button id="pWeek" aria-pressed="true">Semaine</button>
+          <button id="pMonth" aria-pressed="false">Mois</button>
+        </div>
+        <div class="field" style="flex:1 1 160px"><select id="bClient" aria-label="Client"></select></div>
+      </div>
+      <div class="pnav"><button id="bPrev" aria-label="Période précédente">‹</button><b id="bLabel"></b><button id="bNext" aria-label="Période suivante">›</button></div>
+      <div class="kpis" id="bKpis"></div>
+      <p class="hint">Totaux par lot : quantité et poids vendus, retournés, et le net à reporter (vendu moins retour).</p>
+      <div class="list" id="bList"></div>
+      <div class="row">
+        <button class="btn primary" id="bXlsx" hidden>Exporter (Excel)</button>
+        <button class="btn" id="bCopy">Copier le bilan</button>
+      </div>
+    </section>
+
+    <section class="view" id="v-produits" hidden>
+      <div class="card" id="pForm">
+        <h3 id="pFormTitle">Ajouter un produit</h3>
+        <div class="field"><label class="label" for="pName">Nom</label><input id="pName" maxlength="60" placeholder="Magret frais" autocomplete="off"></div>
+        <div class="field"><label class="label" for="pUnit">Vendu</label><select id="pUnit"><option value="u">à l'unité</option><option value="kg">au kilo</option></select></div>
+        <div class="field"><label class="label" for="pCat">Rayon</label><input id="pCat" maxlength="30" placeholder="Canard" list="catList" autocomplete="off"><datalist id="catList"></datalist></div>
+        <div class="field"><span class="label">Codes-barres reliés</span>
+          <p class="hint">Un produit peut avoir plusieurs codes, par exemple un par client. Pour une étiquette de balance, mets seulement les 7 premiers chiffres.</p>
+          <div class="list" id="pCodes"></div>
+          <button class="btn" id="pAddCode" type="button">+ Ajouter un code-barres</button>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="pSave">Ajouter</button>
+          <button class="btn" id="pCancel" hidden>Annuler</button>
+        </div>
+        <button class="btn danger" id="pDel" hidden>Supprimer ce produit</button>
+      </div>
+      <div class="srow"><input type="search" class="search" id="pq" placeholder="Chercher dans les produits" aria-label="Chercher dans les produits" autocomplete="off"></div>
+      <div class="list" id="pList"></div>
+    </section>
+  </main>
+
+  <div class="cartbar g" id="bonbar" hidden>
+    <button id="openBon"><span class="cnt" id="bonCnt">Bon vide</span><span class="tot" id="bonTot">voir</span></button>
+  </div>
+
+  <nav class="tabs g" aria-label="Sections">
+    <button data-view="vente" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Vente</button>
+    <button data-view="retour"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Retour</button>
+    <button data-view="produits"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg>Produits</button>
+    <button data-view="bilan"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Bilan</button>
+  </nav>
+</div>
+
+<div class="sheet" id="sEntry" hidden>
+  <div class="panel">
+    <div class="sheet-head"><h2 id="eTitle">Produit</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <div><span class="tag" id="eTag">Vente</span> <span class="hint" id="eInfo"></span></div>
+    <div class="efields">
+      <div class="field"><label class="label" for="eQty">Quantité</label><input id="eQty" class="big" inputmode="decimal" autocomplete="off" data-kp></div>
+      <div class="field"><label class="label" for="eKg">Poids (kg)</label><input id="eKg" class="big" inputmode="decimal" placeholder="0,000" autocomplete="off" data-kp></div>
+      <div class="field full"><label class="label" for="eLot">Lot</label><input id="eLot" class="big lotin" maxlength="20" placeholder="1313" autocomplete="off" data-kp></div>
+    </div>
+    <div class="field"><span class="label">Lots en cours pour ce produit (tous clients)</span><div class="lotlist" id="eRecent"></div></div>
+    <div class="keypad" id="eKeys"></div>
+    <button class="btn" type="button" data-vkb="eLot" aria-pressed="false">ABC · lettres dans le lot</button>
+    <div class="vkb" data-vkb-for="eLot" data-upper hidden></div>
+    <button class="btn primary" id="eOk">Enregistrer</button>
+  </div>
+</div>
+
+<div class="sheet" id="sBon" hidden>
+  <div class="panel">
+    <div class="sheet-head"><h2 id="bonTitle">Bon en cours</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <p class="hint" id="bonSub"></p>
+    <div class="list" id="lines"></div>
+    <div class="kpis" id="dayKpis"></div>
+    <button class="btn primary" id="bonFinish">Terminer le bon</button>
+    <p class="hint">« Terminer » clôt ce bon : il reste dans les bilans et les exports, et la saisie suivante commence un nouveau bon.</p>
+    <div class="list" id="bonDoneWrap" hidden><h3 class="label">Bons terminés ce jour</h3><div class="list" id="bonDone"></div></div>
+  </div>
+</div>
+
+<div class="sheet" id="sSync" hidden>
+  <div class="panel">
+    <div class="sheet-head"><h2>Synchronisation</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <p class="hint">Tout est enregistré sur ce téléphone, même sans réseau. Dès qu'il y a internet, l'appli envoie les saisies au tableau Google Sheets et récupère celles des autres téléphones, toute seule.</p>
+    <p class="hint" id="syInfo"></p>
+    <div class="field"><label class="label" for="syUrl">Adresse du tableau (Apps Script)</label><input id="syUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label class="label" for="syCode">Code secret</label><input id="syCode" placeholder="le même sur chaque téléphone" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="row"><button class="btn primary" id="sySave">Enregistrer</button><button class="btn" id="syNow">Synchroniser maintenant</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sScan" hidden>
+  <div class="panel">
+    <div class="sheet-head"><h2>Code-barres inconnu</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <p class="hint" id="scanInfo"></p>
+    <div class="cats" id="scanCats" role="toolbar" aria-label="Rayons"></div>
+    <div class="srow"><input type="search" class="search" id="scanQ" placeholder="Ou chercher par nom" aria-label="Chercher le produit" autocomplete="off"><button class="kbtn" data-vkb="scanQ" aria-label="Afficher le clavier" aria-pressed="false">⌨</button></div>
+    <div class="vkb" data-vkb-for="scanQ" hidden></div>
+    <div class="list" id="scanList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const dayOf = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const today = () => dayOf(new Date());
+const pDay = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const hhmm = iso => { const d = new Date(iso); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const slug = s => norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || rid();
+const num = s => { const n = parseFloat(String(s ?? "").replace(/\s/g, "").replace(",", ".")); return isFinite(n) ? n : NaN; };
+const fr = (n, d) => (n || 0).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const kgTxt = k => fr(k, 3) + " kg";
+const qTxt = q => fr(q, Number.isInteger(Math.round((q || 0) * 1000) / 1000) ? 0 : 2);
+const NCOLORS = 6;
+const LABEL = { vente: "Vente", retour: "Retour" };
+
+const S = {
+  db: null, uid: null, downloads: null, readOnly: false, dbState: "loading",
+  bons: [], unsubB: null,
+  products: ls.get("cmd.products", []), clients: ls.get("cmd.clients", []), lines: [], unsubL: null,
+  view: "vente", client: ls.get("cmd.client", ""), day: today(), cat: "Tout", q: "",
+  lastLots: ls.get("cmd.lots", {}), lots: ls.get("cmd.activeLots", {}), outbox: ls.get("cmd.outbox", []), offline: false, flushing: false, pending: 0,
+  entry: null, kpField: "eQty", openGrp: null, editing: null, pColor: 0, pq: "",
+  bPeriod: "semaine", bRef: today(), bClient: "", bLines: [], bLoading: false, bSeq: 0
+};
+
+/* ---------- toast & sheets ---------- */
+let toastT;
+function toast(msg, ms = 2600, undo) {
+  const t = $("#toast"); t.replaceChildren(el("span", null, msg)); t.hidden = false; clearTimeout(toastT);
+  if (undo) { const b = el("button", "toast-undo", "Annuler"); b.onclick = () => { undo(); t.hidden = true; }; t.append(b); }
+  toastT = setTimeout(() => t.hidden = true, ms);
+}
+function openSheet(id) { $$(".sheet").forEach(s => s.hidden = s.id !== id); }
+function closeSheets() { $$(".sheet").forEach(s => s.hidden = true); }
+$$(".sheet").forEach(s => s.addEventListener("click", e => { if (e.target === s) s.hidden = true; }));
+$$("[data-close]").forEach(b => b.addEventListener("click", closeSheets));
+function armed(btn, label, run) {
+  if (btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.classList.remove("armed"); run(); return; }
+  const orig = btn.textContent; btn.dataset.armed = "1"; btn.classList.add("armed"); btn.textContent = label;
+  setTimeout(() => { if (btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.classList.remove("armed"); btn.textContent = orig; } }, 3000);
+}
+
+/* ---------- sync ---------- */
+async function tracked(p) { S.pending++; renderSync(); try { return await p; } finally { S.pending--; renderSync(); } }
+function showBanner(msg) { const b = $("#dbBanner"); b.textContent = msg; b.hidden = !msg; }
+function dbError(e, what) {
+  const c = e && e.code;
+  if (c === "invalid_argument" || c === "permission_denied") { S.readOnly = true; showBanner("Ce compte peut consulter mais pas enregistrer. Demande au propriétaire de la page de t'inviter comme éditeur."); }
+  else if (c === "quota_exceeded") toast("La base est pleine : exporte puis supprime d'anciennes saisies.", 5000);
+  else toast("Échec : " + what + ". Vérifie la connexion et réessaie.", 4000);
+}
+function saveOutbox() { ls.set("cmd.outbox", S.outbox); }
+function withTimeout(p, ms) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), ms))]); }
+async function flush() {
+  if (S.flushing || !S.db || !S.outbox.length) { renderSync(); return; }
+  S.flushing = true;
+  try {
+    while (S.outbox.length) {
+      const item = S.outbox[0];
+      try { await withTimeout(S.db.collection(item.col || "lignes").doc(item.id).set(item.doc), 12000); S.outbox.shift(); saveOutbox(); }
+      catch (e) { if (e && (e.code === "invalid_argument" || e.code === "permission_denied")) { dbError(e, "saisie refusée"); break; } S.offline = true; break; }
+    }
+  } finally { S.flushing = false; renderSync(); renderSaisie(); }
+}
+setInterval(flush, 15000);
+window.addEventListener("online", () => { S.offline = false; flush(); syncClients(); syncLots(); });
+window.addEventListener("offline", () => { S.offline = true; renderSync(); });
+
+/* ---------- views ---------- */
+function isSaisie() { return S.view === "vente" || S.view === "retour"; }
+function setView(v) {
+  S.view = v;
+  $$("nav.tabs button").forEach(b => { if (b.dataset.view === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  $("#v-saisie").hidden = !isSaisie(); $("#v-bilan").hidden = v !== "bilan"; $("#v-produits").hidden = v !== "produits";
+  document.body.classList.toggle("retour", v === "retour"); closeSheets(); $("#bonbar").hidden = !isSaisie() || !S.client;
+  $("#main").scrollTop = 0; S.openGrp = null;
+  if (v === "bilan") { if (!S.bClient && S.client) S.bClient = ""; loadBilan(); }
+  renderAll();
+}
+$$("nav.tabs button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+
+/* ---------- products ---------- */
+function sortedProducts() { return [...S.products].sort((a, b) => (a.cat || "").localeCompare(b.cat || "", "fr") || a.name.localeCompare(b.name, "fr")); }
+/* every barcode of a product: codes [{ean, price}] plus the old single ean field */
+function codesOf(p) { const l = (Array.isArray(p.codes) ? p.codes : []).filter(c => c && c.ean); if (p.ean && !l.some(c => c.ean === p.ean)) l.push({ ean: p.ean, price: p.price || 0 }); return l; }
+function findCode(key) { for (const p of S.products) { const c = codesOf(p).find(x => x.ean === key); if (c) return { p, price: c.price || p.price || 0 }; } return null; }
+function categories() { return [...new Set(S.products.map(p => p.cat).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")); }
+
+/* ---------- clients ---------- */
+function clientNames() { return [...new Set(S.clients.map(c => c.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")); }
+function selectClient(name) {
+  S.client = name; ls.set("cmd.client", name);
+  /* choosing a client puts today's date */
+  if (S.day !== today()) { S.day = today(); subscribeLines(); }
+  $("#addClientBox").hidden = true; renderSaisie();
+}
+function renderClients() {
+  const box = $("#clientChips"); box.replaceChildren();
+  clientNames().forEach(n => { const b = el("button", null, n); b.setAttribute("aria-pressed", String(S.client === n)); b.onclick = () => selectClient(n); box.append(b); });
+  const add = el("button", "add", "+ Nouveau client"); add.onclick = () => { const bx = $("#addClientBox"); bx.hidden = !bx.hidden; if (!bx.hidden) $("#newClient").focus(); }; box.append(add);
+}
+$("#newClientOk").addEventListener("click", async () => {
+  const n = $("#newClient").value.trim().replace(/\s+/g, " "); if (!n) { $("#newClient").focus(); return; }
+  const ex = clientNames().find(x => norm(x) === norm(n));
+  if (ex) { $("#newClient").value = ""; selectClient(ex); return; }
+  const cl = { id: slug(n), name: n, pendingLocal: true }; S.clients.push(cl); ls.set("cmd.clients", S.clients); $("#newClient").value = ""; selectClient(n);
+  syncClients();
+});
+$("#newClient").addEventListener("keydown", e => { if (e.key === "Enter") $("#newClientOk").click(); });
+$("#day").addEventListener("change", e => { const v = e.target.value || today(); if (v !== S.day) { S.day = v; subscribeLines(); } renderSaisie(); });
+
+async function syncClients() {
+  if (!S.db || S.readOnly) return;
+  for (const c of S.clients.filter(x => x.pendingLocal)) {
+    try { await withTimeout(S.db.collection("clients").doc(c.id).set({ name: c.name, createdAt: new Date().toISOString() }), 12000); delete c.pendingLocal; ls.set("cmd.clients", S.clients); } catch { break; }
+  }
+}
+setInterval(syncClients, 20000);
+
+/* ---------- saisie (vente / retour) ---------- */
+function allLines() {
+  const have = new Set(S.lines.map(l => l.id));
+  return S.lines.concat(S.outbox.filter(o => !o.col && o.doc.day === S.day && !have.has(o.id)).map(o => ({ id: o.id, ...o.doc, waiting: true })));
+}
+/* finished bons of the day (db "bons"), plus those still waiting for the network */
+function allBons() {
+  const have = new Set(S.bons.map(b => b.id));
+  return S.bons.concat(S.outbox.filter(o => o.col === "bons" && o.doc.day === S.day && !have.has(o.id)).map(o => ({ id: o.id, ...o.doc, waiting: true })));
+}
+function closedIds() { const s = new Set(); allBons().forEach(b => (b.ids || []).forEach(i => s.add(i))); return s; }
+function curLines() { const c = closedIds(); return allLines().filter(l => l.type === S.view && l.client === S.client && !c.has(l.id)); }
+function groups(list) {
+  const prods = new Map();
+  list.slice().sort((a, b) => a.name.localeCompare(b.name, "fr") || String(a.lot).localeCompare(String(b.lot)) || (a.at || "").localeCompare(b.at || "")).forEach(r => {
+    const k = r.pid || r.name; if (!prods.has(k)) prods.set(k, { pid: r.pid, name: r.name, lots: new Map(), q: 0, kg: 0 });
+    const P = prods.get(k); if (!P.lots.has(r.lot)) P.lots.set(r.lot, { lot: r.lot, items: [], q: 0, kg: 0 });
+    const L = P.lots.get(r.lot); L.items.push(r); L.q += r.qty || 0; L.kg += r.kg || 0; P.q += r.qty || 0; P.kg += r.kg || 0;
+  });
+  return [...prods.values()];
+}
+const qk = x => qTxt(x.q) + (x.kg ? " · " + kgTxt(x.kg) : "");
+
+function renderSaisie() {
+  if (!isSaisie()) return;
+  const mode = S.view, mine = curLines();
+  $("#modeTitle").textContent = LABEL[mode];
+  $("#modeSub").textContent = S.client ? S.client + " · " + pDay(S.day).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) : "";
+  $("#day").value = S.day;
+  renderClients();
+  $("#entryZone").hidden = !S.client;
+  renderBonBar(mine);
+  if (!S.client) return;
+  $("#saisieHelp").textContent = mode === "vente"
+    ? "Scanne l'étiquette ou touche le produit, puis note la quantité, le poids et le lot envoyés à " + S.client + "."
+    : "Scanne l'étiquette ou touche le produit, puis note la quantité, le poids et le lot repris chez " + S.client + ".";
+
+  const cats = categories(), wrap = $("#cats"); wrap.replaceChildren();
+  if (S.cat !== "Tout" && !cats.includes(S.cat)) S.cat = "Tout";
+  ["Tout", ...cats].forEach(c => { const b = el("button", null, c); b.setAttribute("aria-pressed", String(S.cat === c)); b.onclick = () => { S.cat = c; renderSaisie(); }; wrap.append(b); });
+  const nq = norm(S.q); wrap.hidden = cats.length < 2 || !!nq;
+  const g = $("#grid"); g.replaceChildren();
+  if (!S.products.length) { const e = el("div", "empty", S.dbState === "loading" ? "Chargement des produits…" : "Aucun produit. Ajoute tes articles dans l'onglet Produits."); e.style.gridColumn = "1 / -1"; g.append(e); }
+  const counts = new Map(); mine.forEach(l => counts.set(l.pid, (counts.get(l.pid) || 0) + (l.qty || 0)));
+  sortedProducts().filter(p => nq ? norm(p.name + " " + (p.cat || "")).includes(nq) : (S.cat === "Tout" || p.cat === S.cat)).forEach(p => {
+    const b = el("button", "tile"); b.style.setProperty("--tc", `var(--t${(p.color || 0) % NCOLORS})`);
+    b.append(el("span", "nm", p.name), el("span", "pr", [p.cat, p.unit === "kg" ? "au kilo" : "à l'unité"].filter(Boolean).join(" · ")));
+    const c = counts.get(p.id); if (c) b.append(el("span", "q", qTxt(c)));
+    b.onclick = () => openEntry(p, null);
+    g.append(b);
+  });
+
+  if (!$("#sBon").hidden) renderBon();
+}
+function renderBonBar(mine) {
+  const bar = $("#bonbar"); bar.hidden = !isSaisie() || !S.client;
+  if (bar.hidden) return;
+  const n = mine.length, gsN = new Set(mine.map(l => l.pid || l.name)).size;
+  $("#openBon").classList.toggle("empty-bon", !n);
+  $("#bonCnt").textContent = n ? "Bon en cours · " + gsN + (gsN > 1 ? " produits" : " produit") + " · " + n + (n > 1 ? " saisies" : " saisie") : "Bon en cours vide";
+  $("#bonTot").textContent = n ? "Voir · terminer" : "Voir";
+}
+$("#openBon").onclick = () => { renderBon(); openSheet("sBon"); };
+function renderBon() {
+  const mode = S.view, mine = curLines();
+  $("#bonTitle").textContent = "Bon " + LABEL[mode].toLowerCase() + " · " + S.client;
+  $("#bonSub").textContent = pDay(S.day).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " · tout ce qui a été scanné ou noté sur ce bon.";
+  const list = $("#lines"); list.replaceChildren();
+  const gs = groups(mine);
+  if (!gs.length) list.append(el("div", "empty", "Rien de saisi pour l'instant. Scanne une étiquette ou touche un produit."));
+  gs.forEach(P => {
+    const c = el("div", "card"); c.append(el("h3", null, P.name));
+    P.lots.forEach(L => {
+      const key = P.name + "|" + L.lot, row = el("button", "rt-row");
+      row.append(el("span", null, "Lot " + L.lot + " · " + L.items.length + (L.items.length > 1 ? " saisies" : " saisie")), el("span", "bv", qk(L)));
+      row.setAttribute("aria-expanded", String(S.openGrp === key));
+      row.onclick = () => { S.openGrp = S.openGrp === key ? null : key; renderBon(); };
+      c.append(row);
+      if (S.openGrp === key) {
+        const its = el("div", "rt-items");
+        L.items.forEach(r => {
+          const it = el("div", "rt-it"), del = el("button", null, "Retirer");
+          it.append(el("span", null, (r.waiting ? "en attente · " : "") + hhmm(r.at)), el("span", "bv", qTxt(r.qty) + (r.kg ? " · " + kgTxt(r.kg) : "")), del);
+          del.onclick = () => armed(del, "Confirmer", () => removeLine(r));
+          its.append(it);
+        });
+        c.append(its);
+      }
+    });
+    if (P.lots.size > 1) { const s = el("div", "rt-row sub"); s.append(el("span", null, "Total produit"), el("span", "bv", qk(P))); c.append(s); }
+    list.append(c);
+  });
+  const tq = mine.reduce((s, l) => s + (l.qty || 0), 0), tk = mine.reduce((s, l) => s + (l.kg || 0), 0);
+  const k = $("#dayKpis"); k.replaceChildren();
+  [["Produits", String(gs.length)], ["Quantité", qTxt(tq)], ["Poids", tk ? kgTxt(tk) : "–"]].forEach(([l, v]) => { const d = el("div", "kpi"); d.append(el("span", "label", l), el("b", null, v)); k.append(d); });
+  $("#bonFinish").disabled = !mine.length; if ($("#bonFinish").dataset.armed !== "1") { $("#bonFinish").textContent = "Terminer le bon"; $("#bonFinish").classList.remove("armed"); }
+  const done = allBons().filter(b => b.type === mode && b.client === S.client).sort((a, b) => (a.closedAt || "").localeCompare(b.closedAt || ""));
+  $("#bonDoneWrap").hidden = !done.length; const dl = $("#bonDone"); dl.replaceChildren();
+  done.forEach(b => {
+    const c = el("div", "card"); c.append(el("h3", null, "Terminé à " + hhmm(b.closedAt) + (b.waiting ? " · en attente du réseau" : "")));
+    (b.lines || []).forEach(x => { const r = el("div", "rt-row"); r.append(el("span", null, x.name + " · lot " + x.lot), el("span", "bv", qk(x))); c.append(r); });
+    dl.append(c);
+  });
+}
+$("#bonFinish").onclick = e => {
+  const mine = curLines(); if (!mine.length) return;
+  armed(e.currentTarget, "Toucher encore pour terminer", () => {
+    if (!S.db || S.readOnly) { toast("Non enregistré : cet appareil ne peut pas écrire.", 4000); return; }
+    const lines = []; groups(mine).forEach(P => P.lots.forEach(L => lines.push({ name: P.name, lot: L.lot, q: L.q, kg: Math.round(L.kg * 1000) / 1000 })));
+    const id = S.day + "_" + rid();
+    S.outbox.push({ id, col: "bons", doc: { type: S.view, client: S.client, day: S.day, closedAt: new Date().toISOString(), ids: mine.map(l => l.id), lines, by: S.uid || null } });
+    saveOutbox(); flush(); S.openGrp = null; closeSheets(); renderSaisie();
+    toast("Bon terminé · " + S.client + ". Le suivant commence vide.", 3500);
+  });
+};
+$("#q").addEventListener("input", e => { S.q = e.target.value; renderSaisie(); });
+
+/* ---------- entry sheet: quantity, weight, lot typed by hand ---------- */
+/* lots in progress are shared per product for every client (db "lots/<pid>" = {active: [...]}) ; a product can have several at once */
+function activeLots(pid) { const a = S.lots[pid]; return Array.isArray(a) ? a : []; }
+async function setActiveLots(pid, list) {
+  S.lots[pid] = list; ls.set("cmd.activeLots", S.lots);
+  if (!S.db || S.readOnly) return;
+  S.lotsDirty = S.lotsDirty || {}; S.lotsDirty[pid] = true;
+  try { await withTimeout(S.db.collection("lots").doc(pid).set({ active: list, updatedAt: new Date().toISOString() }), 12000); delete S.lotsDirty[pid]; } catch {}
+}
+function syncLots() { if (S.lotsDirty) Object.keys(S.lotsDirty).forEach(pid => setActiveLots(pid, activeLots(pid))); }
+setInterval(syncLots, 20000);
+function renderLotChoices() {
+  const E = S.entry; if (!E) return;
+  const p = E.p, box = $("#eRecent"), cur = $("#eLot").value.trim().toUpperCase(); box.replaceChildren();
+  const list = activeLots(p.id);
+  if (!list.length) box.append(el("p", "hint", "Aucun lot en cours : tape le numéro de lot, il sera gardé pour tous les clients."));
+  list.forEach(l => {
+    const r = el("div", "lotc"), b = el("button", "pick", "Lot " + l), end = el("button", "end", "Fin de lot");
+    b.type = end.type = "button"; b.setAttribute("aria-pressed", String(cur === l));
+    b.onclick = () => { $("#eLot").value = l; S.kpField = "eQty"; renderEntry(); };
+    end.onclick = () => armed(end, "Confirmer la fin", () => {
+      setActiveLots(p.id, activeLots(p.id).filter(x => x !== l));
+      if ($("#eLot").value.trim().toUpperCase() === l) $("#eLot").value = activeLots(p.id)[0] || "";
+      S.kpField = "eLot"; toast("Lot " + l + " terminé. Tape le nouveau lot."); renderEntry();
+    });
+    r.append(b, end); box.append(r);
+  });
+  if (list.length) { const n = el("button", "btn", "+ Nouveau lot"); n.type = "button"; n.style.padding = "10px"; n.onclick = () => { $("#eLot").value = ""; S.kpField = "eLot"; renderEntry(); }; box.append(n); }
+}
+function openEntry(p, code, perKg) {
+  if (!S.client) { toast("Choisis d'abord le client", 3000); return; }
+  const kg = null;
+  S.entry = { p, code: code || "" };
+  $("#eTitle").textContent = p.name; $("#eTag").textContent = LABEL[S.view];
+  $("#eInfo").textContent = S.client + (kg ? " · poids lu sur l'étiquette, à vérifier" : "");
+  $("#eQty").value = "1"; $("#eKg").value = kg ? fr(kg, 3) : "";
+  const act = activeLots(p.id), last = S.lastLots["*|" + p.id];
+  $("#eLot").value = act.includes(last) ? last : (act[0] || "");
+  S.kpField = $("#eLot").value ? (kg ? "eQty" : "eKg") : "eLot";
+  if (p.unit !== "kg" && !kg && $("#eLot").value) S.kpField = "eQty";
+  openSheet("sEntry"); renderEntry();
+}
+function renderEntry() {
+  renderLotChoices();
+  ["eQty", "eKg", "eLot"].forEach(id => $("#" + id).classList.toggle("on", S.kpField === id));
+  const q = num($("#eQty").value);
+  $("#eOk").disabled = !(q > 0) || !$("#eLot").value.trim();
+  $("#eOk").textContent = !$("#eLot").value.trim() ? "Note le numéro de lot" : "Enregistrer · " + LABEL[S.view].toLowerCase();
+}
+$$("[data-kp]").forEach(i => { i.addEventListener("focus", () => { S.kpField = i.id; renderEntry(); }); i.addEventListener("input", renderEntry); i.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); if (!$("#eOk").disabled) $("#eOk").click(); } }); });
+["7", "8", "9", "⌫", "4", "5", "6", "C", "1", "2", "3", ",", "0", "00", "→", "OK"].forEach(k => {
+  const b = el("button", null, k); b.type = "button";
+  if (k === "OK") { b.style.background = "var(--accent)"; b.style.color = "var(--accent-ink)"; }
+  b.onclick = () => {
+    if (k === "OK") { $("#eOk").click(); return; }
+    if (k === "→") { const order = ["eQty", "eKg", "eLot"]; S.kpField = order[(order.indexOf(S.kpField) + 1) % 3]; renderEntry(); return; }
+    const i = $("#" + S.kpField);
+    if (k === "⌫") i.value = i.value.slice(0, -1);
+    else if (k === "C") i.value = "";
+    else if (k === ",") { if (S.kpField !== "eLot" && !i.value.includes(",")) i.value = (i.value || "0") + ","; }
+    else i.value = (i.dataset.fresh === "1" ? "" : i.value) + k;
+    i.dataset.fresh = ""; renderEntry();
+  };
+  $("#eKeys").append(b);
+});
+$("#eKeys").addEventListener("pointerdown", e => e.preventDefault());
+/* the first key typed in quantity replaces the default 1 */
+$("#eQty").dataset.fresh = "1";
+$("#eOk").addEventListener("click", () => {
+  const E = S.entry; if (!E) return;
+  const qty = num($("#eQty").value), kgv = num($("#eKg").value), lot = $("#eLot").value.trim().toUpperCase();
+  if (!(qty > 0)) { S.kpField = "eQty"; renderEntry(); toast("Note la quantité"); return; }
+  if (!lot) { S.kpField = "eLot"; renderEntry(); toast("Note le numéro de lot"); return; }
+  if (!S.db || S.readOnly) { toast("Non enregistré : cet appareil ne peut pas écrire.", 4000); return; }
+  const p = E.p, doc = { type: S.view, client: S.client, day: S.day, at: new Date().toISOString(), pid: p.id, name: p.name, cat: p.cat || "", qty, lot, by: S.uid || null };
+  if (kgv > 0) doc.kg = Math.round(kgv * 1000) / 1000;
+  if (E.code) doc.code = E.code;
+  S.lastLots["*|" + p.id] = lot; ls.set("cmd.lots", S.lastLots);
+  if (!activeLots(p.id).includes(lot)) setActiveLots(p.id, activeLots(p.id).concat(lot));
+  const id = S.day + "_" + rid();
+  S.outbox.push({ id, doc }); saveOutbox(); flush();
+  S.entry = null; closeSheets(); $("#eQty").dataset.fresh = "1"; renderSaisie();
+  if (navigator.vibrate) try { navigator.vibrate(30); } catch {}
+  toast(LABEL[doc.type] + " · " + p.name + " · lot " + lot + " · " + qTxt(qty) + (doc.kg ? " · " + kgTxt(doc.kg) : ""), 3500, () => removeLine({ id, waiting: true }));
+});
+async function removeLine(r) {
+  const i = S.outbox.findIndex(o => o.id === r.id);
+  if (i >= 0) { S.outbox.splice(i, 1); saveOutbox(); }
+  S.lines = S.lines.filter(l => l.id !== r.id); renderSaisie(); if (!$("#sBon").hidden) renderBon();
+  if (!r.waiting || i < 0) { try { await tracked(S.db.collection("lignes").doc(r.id).delete()); } catch (e) { dbError(e, "la saisie n'a pas été retirée"); } }
+}
+
+/* on-screen keyboard: iOS hides its own keyboard while a Bluetooth scanner is paired */
+/* on-screen keyboard: iOS hides its own keyboard while a Bluetooth scanner is paired */
+const VKB_ROWS = ["AZERTYUIOP", "QSDFGHJKLM", "WXCVBN"];
+$$(".vkb").forEach(box => {
+  const inp = document.getElementById(box.dataset.vkbFor);
+  const type = fn => { fn(); inp.dispatchEvent(new Event("input", { bubbles: true })); };
+  VKB_ROWS.forEach((r, i) => {
+    const row = el("div");
+    [...r].forEach(ch => { const b = el("button", null, ch); b.type = "button"; b.onclick = () => type(() => inp.value += box.hasAttribute("data-upper") ? ch : ch.toLowerCase()); row.append(b); });
+    if (i === 2) { const del = el("button", "wide", "⌫"); del.type = "button"; del.setAttribute("aria-label", "Effacer"); del.onclick = () => type(() => inp.value = inp.value.slice(0, -1)); row.append(del); }
+    box.append(row);
+  });
+  const last = el("div"), sp = el("button", "wide", "espace"), clr = el("button", "wide", "Tout effacer");
+  sp.type = clr.type = "button";
+  sp.onclick = () => type(() => inp.value += " "); clr.onclick = () => type(() => inp.value = "");
+  last.append(clr, sp); box.append(last);
+  box.addEventListener("pointerdown", e => e.preventDefault());
+});
+$$("[data-vkb]").forEach(b => b.addEventListener("click", () => {
+  const box = document.querySelector(`[data-vkb-for="${b.dataset.vkb}"]`);
+  box.hidden = !box.hidden; b.setAttribute("aria-pressed", String(!box.hidden));
+}));
+
+
+/* ---------- barcode scanner (Bluetooth scanner typing like a keyboard) ----------
+   Scale labels use EAN-13 "2PPPPPP€€€€€C": first 7 digits name the product, the next 5 the price in cents. */
+function eanOk(c) { if (!/^\d{13}$/.test(c)) return false; let s = 0; for (let i = 0; i < 12; i++) s += +c[i] * (i % 2 ? 3 : 1); return (10 - s % 10) % 10 === +c[12]; }
+const AZERTY = { "&": "1", "é": "2", "É": "2", "\"": "3", "«": "3", "»": "3", "“": "3", "”": "3", "'": "4", "’": "4", "‘": "4", "(": "5", "§": "6", "è": "7", "È": "7", "!": "8", "_": "8", "ç": "9", "Ç": "9", "à": "0", "À": "0" };
+let scanBuf = "", scanT = 0, scanIdle = 0;
+document.addEventListener("keydown", e => {
+  const tgt = e.target, typing = tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT");
+  const now = Date.now();
+  if (now - scanT > 100) scanBuf = "";
+  scanT = now;
+  /* a scanner set to a US keyboard, on a French (AZERTY) iPhone, types & é " ' ( § è ! ç à instead of 1…0 */
+  const k = e.key && e.key.length === 1 ? (AZERTY[e.key] ?? e.key) : "";
+  if (k && /[0-9A-Za-z\-\.\/\+]/.test(k)) {
+    scanBuf += k;
+    /* some scanners send no Enter/Tab at the end: a burst of 6+ characters followed by silence is a scan too */
+    clearTimeout(scanIdle);
+    if (!typing) scanIdle = setTimeout(() => { if (scanBuf.length >= 6) { const c = scanBuf; scanBuf = ""; handleScan(c); } }, 300);
+    return;
+  }
+  if ((e.key === "Enter" || e.key === "Tab") && scanBuf.length >= 4) {
+    const code = scanBuf; scanBuf = ""; clearTimeout(scanIdle);
+    if (typing && !/^\d+$/.test(code)) return;            /* fast typing in a field, not a scan */
+    if (typing && tgt.id !== "scanQ") { tgt.value = tgt.value.replace(code, ""); }
+    /* stop the scanner's Enter from also pressing whatever button has focus (e.g. the photo tile) */
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (!typing && document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    handleScan(code);
+  }
+}, true);
+function handleScan(code) {
+  code = String(code).trim();
+  if (/^[\d-]+$/.test(code) && code.includes("-") && code.replace(/-/g, "6").length >= 12) code = code.replace(/-/g, "6");
+  if (/^\d{12}$/.test(code)) {
+    if (eanOk("0" + code) && code[0] !== "2") code = "0" + code;
+    else { let t = 0; for (let i = 0; i < 12; i++) t += +code[i] * (i % 2 ? 3 : 1); code += (10 - t % 10) % 10; }
+  }
+  if (code.length === 13 && /^\d+$/.test(code) && !eanOk(code)) { toast("Code " + code + " mal lu, rescanne l'étiquette", 4000); return; }
+  if (!isSaisie()) { toast("Va dans Vente ou Retour pour scanner", 3000); return; }
+  if (!S.client) { toast("Choisis d'abord le client", 3000); return; }
+  if (!$("#sBon").hidden) closeSheets();
+  if (!$("#sEntry").hidden) { toast("Enregistre d'abord la saisie en cours", 3000); return; }
+  const key = /^2\d{12}$/.test(code) ? code.slice(0, 7) : code;
+  const f = findCode(key);
+  if (!f) { openScanPick(code, key); return; }
+  openEntry(f.p, code, f.price);
+}
+let scanPending = null;
+function openScanPick(code, key) {
+  scanPending = { code, key };
+  $("#scanInfo").textContent = "Le code " + code + " n'est relié à aucun produit. Choisis le produit une fois, l'appli s'en souviendra pour les prochaines étiquettes.";
+  $("#scanQ").value = ""; S.scanCat = null; renderScanList(); openSheet("sScan");
+}
+function renderScanList() {
+  const nq = norm($("#scanQ").value), box = $("#scanList"); box.replaceChildren();
+  const cw = $("#scanCats"); cw.replaceChildren();
+  categories().forEach(c => { const b = el("button", null, c); b.setAttribute("aria-pressed", String(S.scanCat === c)); b.onclick = () => { S.scanCat = S.scanCat === c ? null : c; $("#scanQ").value = ""; renderScanList(); }; cw.append(b); });
+  if (!nq && !S.scanCat) { box.append(el("p", "hint", "Choisis le rayon du produit ci-dessus.")); return; }
+  sortedProducts().filter(p => nq ? norm(p.name + " " + (p.cat || "")).includes(nq) : p.cat === S.scanCat).slice(0, 60).forEach(p => {
+    const r = el("button", "prow"), sw = el("span", "sw"), pn = el("span", "pn", p.name);
+    sw.style.background = `var(--t${(p.color || 0) % NCOLORS})`; if (p.cat) pn.append(el("small", null, p.cat));
+    r.append(sw, pn);
+    r.onclick = () => { const sp = scanPending; scanPending = null; closeSheets(); if (!sp) return; linkEan(p, sp.key); openEntry(p, sp.code); };
+    box.append(r);
+  });
+}
+$("#scanQ").addEventListener("input", () => { S.scanCat = null; renderScanList(); });
+async function linkEan(p, key) {
+  if (!key || codesOf(p).some(c => c.ean === key) || !S.db || S.readOnly) return;
+  p.codes = codesOf(p).map(c => ({ ean: c.ean })).concat({ ean: key });
+  try { await tracked(S.db.collection("products").doc(p.id).update({ codes: p.codes })); toast("Code " + key + " relié à " + p.name); } catch {}
+}
+
+/* ---------- bilan: week (Monday to Sunday) or month ---------- */
+function period() {
+  const d = pDay(S.bRef);
+  if (S.bPeriod === "jour") {
+    const l = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return { from: dayOf(d), to: dayOf(d), label: l.charAt(0).toUpperCase() + l.slice(1), file: "jour_" + dayOf(d) };
+  }
+  if (S.bPeriod === "mois") {
+    const a = new Date(d.getFullYear(), d.getMonth(), 1), b = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const l = a.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    return { from: dayOf(a), to: dayOf(b), label: l.charAt(0).toUpperCase() + l.slice(1), file: dayOf(a).slice(0, 7) };
+  }
+  const a = new Date(d); a.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const b = new Date(a); b.setDate(a.getDate() + 6);
+  const f = x => x.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return { from: dayOf(a), to: dayOf(b), label: "Semaine du " + f(a) + " au " + f(b), file: "semaine_" + dayOf(a) };
+}
+function shiftPeriod(n) {
+  const d = pDay(S.bRef);
+  if (S.bPeriod === "mois") d.setMonth(d.getMonth() + n, 1); else d.setDate(d.getDate() + (S.bPeriod === "jour" ? 1 : 7) * n);
+  S.bRef = dayOf(d); loadBilan();
+}
+$("#bPrev").onclick = () => shiftPeriod(-1); $("#bNext").onclick = () => shiftPeriod(1);
+$("#pWeek").onclick = () => { S.bPeriod = "semaine"; loadBilan(); };
+$("#pDay").onclick = () => { S.bPeriod = "jour"; loadBilan(); };
+$("#pMonth").onclick = () => { S.bPeriod = "mois"; loadBilan(); };
+$("#bClient").onchange = e => { S.bClient = e.target.value; renderBilan(); };
+async function loadBilan() {
+  renderBilan();
+  if (!S.db) return;
+  const P = period(), seq = ++S.bSeq; S.bLoading = true; renderBilan();
+  try {
+    /* read the period one week at a time, so each read stays well under the 1000-row page */
+    const out = [], start = pDay(P.from), end = pDay(P.to);
+    for (let a = new Date(start); a <= end; a.setDate(a.getDate() + 7)) {
+      const b = new Date(a); b.setDate(a.getDate() + 6); const to = b > end ? P.to : dayOf(b);
+      const snap = await S.db.collection("lignes").where("day", ">=", dayOf(a)).where("day", "<=", to).limit(1000).get();
+      snap.docs.forEach(d => out.push({ id: d.id, ...d.data() }));
+    }
+    if (seq !== S.bSeq) return;
+    S.bLines = out;
+  } catch (e) { if (seq === S.bSeq) toast("Bilan non chargé. Vérifie la connexion.", 4000); }
+  finally { if (seq === S.bSeq) { S.bLoading = false; renderBilan(); } }
+}
+function bilanLines() {
+  const P = period(), have = new Set(S.bLines.map(l => l.id));
+  const all = S.bLines.concat(S.outbox.filter(o => !o.col && !have.has(o.id)).map(o => ({ id: o.id, ...o.doc }))).filter(l => l.day >= P.from && l.day <= P.to);
+  return S.bClient ? all.filter(l => l.client === S.bClient) : all;
+}
+/* client -> product -> lot, with sold and returned quantity and weight */
+function bilanTree(list) {
+  const cl = new Map();
+  list.forEach(l => {
+    if (!cl.has(l.client)) cl.set(l.client, { name: l.client, prods: new Map() });
+    const C = cl.get(l.client), pk = l.pid || l.name;
+    if (!C.prods.has(pk)) C.prods.set(pk, { name: l.name, lots: new Map() });
+    const P = C.prods.get(pk); if (!P.lots.has(l.lot)) P.lots.set(l.lot, { lot: l.lot, vq: 0, vk: 0, rq: 0, rk: 0 });
+    const L = P.lots.get(l.lot);
+    if (l.type === "retour") { L.rq += l.qty || 0; L.rk += l.kg || 0; } else { L.vq += l.qty || 0; L.vk += l.kg || 0; }
+  });
+  const sum = arr => arr.reduce((s, x) => ({ vq: s.vq + x.vq, vk: s.vk + x.vk, rq: s.rq + x.rq, rk: s.rk + x.rk }), { vq: 0, vk: 0, rq: 0, rk: 0 });
+  return [...cl.values()].sort((a, b) => a.name.localeCompare(b.name, "fr")).map(C => {
+    const prods = [...C.prods.values()].sort((a, b) => a.name.localeCompare(b.name, "fr")).map(P => {
+      const lots = [...P.lots.values()].sort((a, b) => String(a.lot).localeCompare(String(b.lot), "fr", { numeric: true }));
+      return { name: P.name, lots, tot: sum(lots) };
+    });
+    return { name: C.name, prods, tot: sum(prods.map(p => p.tot)) };
+  });
+}
+const kgc = k => k ? fr(k, 3) : "–";
+function renderBilan() {
+  if (S.view !== "bilan") return;
+  const P = period();
+  $("#pDay").setAttribute("aria-pressed", String(S.bPeriod === "jour")); $("#pWeek").setAttribute("aria-pressed", String(S.bPeriod === "semaine")); $("#pMonth").setAttribute("aria-pressed", String(S.bPeriod === "mois"));
+  $("#bLabel").textContent = P.label;
+  const sel = $("#bClient"), names = [...new Set([...clientNames(), ...S.bLines.map(l => l.client).filter(Boolean)])].sort((a, b) => a.localeCompare(b, "fr"));
+  sel.replaceChildren(...[["", "Tous les clients"], ...names.map(n => [n, n])].map(([v, t]) => { const o = el("option", null, t); o.value = v; return o; }));
+  sel.value = S.bClient;
+  const tree = bilanTree(bilanLines()), T = tree.reduce((s, c) => ({ vq: s.vq + c.tot.vq, vk: s.vk + c.tot.vk, rq: s.rq + c.tot.rq, rk: s.rk + c.tot.rk }), { vq: 0, vk: 0, rq: 0, rk: 0 });
+  const k = $("#bKpis"); k.replaceChildren();
+  [["v", "Vendu", T.vq, T.vk], ["r", "Retours", T.rq, T.rk], ["n", "Net", T.vq - T.rq, T.vk - T.rk]].forEach(([c, l, q, kg]) => {
+    const d = el("div", "kpi " + c); d.append(el("span", "label", l), el("b", null, qTxt(q))); d.append(el("span", "hint", kg ? kgTxt(kg) : "–")); k.append(d);
+  });
+  const list = $("#bList"); list.replaceChildren();
+  if (S.bLoading && !S.bLines.length) list.append(el("div", "empty", "Chargement du bilan…"));
+  else if (!tree.length) list.append(el("div", "empty", S.db ? "Aucune saisie sur cette période." : "Aucune saisie sur cette période."));
+  tree.forEach(C => {
+    const c = el("div", "card"); c.append(el("h3", null, C.name));
+    const w = el("div", "tbl"), t = el("table", "rec"), hd = el("tr");
+    ["Lot", "Vendu", "kg", "Retour", "kg", "Net", "kg net"].forEach(h => hd.append(el("th", null, h)));
+    t.append(hd);
+    C.prods.forEach(Pr => {
+      const pn = el("tr", "pn"), td = el("td", null, Pr.name); td.colSpan = 7; pn.append(td); t.append(pn);
+      const rowOf = (label, x, cls) => {
+        const tr = el("tr", cls);
+        tr.append(el("td", null, label), el("td", null, qTxt(x.vq)), el("td", null, kgc(x.vk)), el("td", "ret", x.rq ? qTxt(x.rq) : "–"), el("td", "ret", kgc(x.rk)), el("td", null, qTxt(x.vq - x.rq)), el("td", null, kgc(x.vk - x.rk)));
+        t.append(tr);
+      };
+      Pr.lots.forEach(L => rowOf("Lot " + L.lot, L));
+      if (Pr.lots.length > 1) rowOf("Total", Pr.tot, "pt");
+    });
+    w.append(t); c.append(w);
+    const s = el("div", "rt-row sub"); s.append(el("span", null, "Total " + C.name), el("span", "bv", "net " + qTxt(C.tot.vq - C.tot.rq) + (C.tot.vk - C.tot.rk ? " · " + kgTxt(C.tot.vk - C.tot.rk) : ""))); c.append(s);
+    list.append(c);
+  });
+  $("#bXlsx").hidden = !S.downloads;
+}
+function bilanText() {
+  const P = period(), tree = bilanTree(bilanLines()), L = ["Bilan · " + P.label + (S.bClient ? " · " + S.bClient : "")];
+  if (!tree.length) L.push("Aucune saisie.");
+  tree.forEach(C => {
+    L.push("", C.name.toUpperCase());
+    C.prods.forEach(Pr => {
+      L.push(Pr.name);
+      Pr.lots.forEach(x => L.push(" - Lot " + x.lot + " : vendu " + qTxt(x.vq) + (x.vk ? " (" + kgTxt(x.vk) + ")" : "") + (x.rq ? ", retour " + qTxt(x.rq) + (x.rk ? " (" + kgTxt(x.rk) + ")" : "") : "") + " = net " + qTxt(x.vq - x.rq) + (x.vk - x.rk ? " (" + kgTxt(x.vk - x.rk) + ")" : "")));
+    });
+  });
+  return L.join("\n");
+}
+function fallbackCopy(txt) { const t = el("textarea"); t.value = txt; t.style.cssText = "position:fixed;opacity:0"; document.body.append(t); t.select(); try { document.execCommand("copy"); toast("Copié"); } catch { toast("Copie impossible ici"); } t.remove(); }
+$("#bCopy").onclick = () => { const txt = bilanText(); try { navigator.clipboard.writeText(txt).then(() => toast("Bilan copié"), () => fallbackCopy(txt)); } catch { fallbackCopy(txt); } };
+
+/* minimal .xlsx writer (stored zip, inline strings): sheets = [{name, cols: [widths], rows: [[cell]]}], cell = string | number | null */
+function xlsxBlob(sheets) {
+  const enc = new TextEncoder(), esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const colL = i => { let s = ""; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const sheetXml = sh => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    (sh.cols ? "<cols>" + sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("") + "</cols>" : "") + "<sheetData>" +
+    sh.rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => v == null || v === "" ? "" : typeof v === "number"
+      ? `<c r="${colL(ci)}${ri + 1}"${sh.bold && sh.bold.includes(ri) ? ' s="1"' : ""}><v>${v}</v></c>`
+      : `<c r="${colL(ci)}${ri + 1}" t="inlineStr"${sh.bold && sh.bold.includes(ri) ? ' s="1"' : ""}><is><t xml:space="preserve">${esc(v)}</t></is></c>`).join("") + "</row>").join("") + "</sheetData></worksheet>";
+  const files = [
+    ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + "</Types>"],
+    ["_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ["xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+      sheets.map((s, i) => `<sheet name="${esc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("") + "</sheets></workbook>"],
+    ["xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("") +
+      `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ["xl/styles.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>'],
+    ...sheets.map((s, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(s)])
+  ];
+  const crcT = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crcT[n] = c >>> 0; }
+  const crc = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = crcT[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const parts = [], cen = []; let off = 0;
+  files.forEach(([name, txt]) => {
+    const nb = enc.encode(name), db = enc.encode(txt), c = crc(db);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, c, true); h.setUint32(18, db.length, true); h.setUint32(22, db.length, true); h.setUint16(26, nb.length, true);
+    const ce = new DataView(new ArrayBuffer(46));
+    ce.setUint32(0, 0x02014b50, true); ce.setUint16(4, 20, true); ce.setUint16(6, 20, true); ce.setUint16(8, 0x0800, true); ce.setUint32(16, c, true); ce.setUint32(20, db.length, true); ce.setUint32(24, db.length, true); ce.setUint16(28, nb.length, true); ce.setUint32(42, off, true);
+    parts.push(new Uint8Array(h.buffer), nb, db); cen.push(new Uint8Array(ce.buffer), nb);
+    off += 30 + nb.length + db.length;
+  });
+  const cenLen = cen.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cenLen, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+$("#bXlsx").onclick = async () => {
+  const P = period(), list = bilanLines(), tree = bilanTree(list), r3 = k => k ? Math.round(k * 1000) / 1000 : null;
+  const title = "Bilan " + P.label + (S.bClient ? " · " + S.bClient : "");
+  const tot = [[title], [], ["Client", "Produit", "Lot", "Qté vendue", "Poids vendu (kg)", "Qté retour", "Poids retour (kg)", "Qté nette", "Poids net (kg)"]], bold = [0, 2];
+  tree.forEach(C => {
+    C.prods.forEach(Pr => {
+      Pr.lots.forEach(x => tot.push([C.name, Pr.name, String(x.lot), x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]));
+      if (Pr.lots.length > 1) { const x = Pr.tot; bold.push(tot.length); tot.push([C.name, "Total " + Pr.name, "", x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]); }
+    });
+    const x = C.tot; bold.push(tot.length); tot.push(["Total " + C.name, "", "", x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]); tot.push([]);
+  });
+  const detail = [["Date", "Heure", "Client", "Type", "Produit", "Lot", "Quantité", "Poids (kg)", "Code-barres"]];
+  list.slice().sort((a, b) => (a.day + a.at).localeCompare(b.day + b.at)).forEach(l => detail.push([l.day, hhmm(l.at), l.client, LABEL[l.type] || l.type, l.name, String(l.lot), l.qty, r3(l.kg), l.code || ""]));
+  const blob = xlsxBlob([{ name: "Totaux par lot", rows: tot, bold, cols: [22, 34, 12, 11, 15, 11, 15, 11, 14] }, { name: "Détail", rows: detail, bold: [0], cols: [12, 8, 22, 9, 34, 12, 10, 11, 16] }]);
+  const fn = ["bilan", P.file, S.bClient ? slug(S.bClient) : ""].filter(Boolean).join("_") + ".xlsx";
+  try { await S.downloads.save({ filename: fn, data: blob }); }
+  catch (e) { if (e && e.code !== "declined") toast("Téléchargement impossible ici"); }
+};
+
+/* ---------- products admin ---------- */
+S.fCodes = [];
+function renderCodes() {
+  const box = $("#pCodes"); box.replaceChildren();
+  if (!S.fCodes.length) box.append(el("p", "hint", "Aucun code-barres pour l'instant."));
+  S.fCodes.forEach((c, i) => {
+    const r = el("div", "coderow"), a = el("input"), x = el("button", null, "Retirer"); r.style.gridTemplateColumns = "minmax(0, 1fr) auto";
+    a.inputMode = "numeric"; a.maxLength = 20; a.placeholder = "Code"; a.value = c.ean; a.setAttribute("aria-label", "Code-barres " + (i + 1));
+    a.oninput = () => c.ean = a.value.replace(/\D/g, ""); x.type = "button";
+    x.onclick = () => { S.fCodes.splice(i, 1); renderCodes(); };
+    r.append(a, x); box.append(r);
+  });
+}
+$("#pAddCode").onclick = () => { S.fCodes.push({ ean: "" }); renderCodes(); const ins = $$("#pCodes .coderow input"); if (ins.length) ins[ins.length - 1].focus(); };
+function fillForm(p) {
+  S.editing = p ? p.id : null;
+  $("#pFormTitle").textContent = p ? "Modifier · " + p.name : "Ajouter un produit";
+  $("#pName").value = p ? p.name : "";
+  $("#pCat").value = p ? (p.cat || "") : ""; $("#pUnit").value = p && p.unit === "kg" ? "kg" : "u";
+  S.fCodes = p ? codesOf(p).map(c => ({ ean: c.ean })) : []; renderCodes();
+  $("#pSave").textContent = p ? "Enregistrer" : "Ajouter"; $("#pCancel").hidden = !p; $("#pDel").hidden = !p;
+}
+function renderProduits() {
+  if (S.view !== "produits") return;
+  $("#catList").replaceChildren(...categories().map(c => { const o = el("option"); o.value = c; return o; }));
+  const box = $("#pList"); box.replaceChildren(); const nq = norm(S.pq);
+  const list = sortedProducts().filter(p => !nq || norm(p.name + " " + (p.cat || "") + " " + codesOf(p).map(c => c.ean).join(" ")).includes(nq));
+  if (!list.length) box.append(el("div", "empty", S.products.length ? "Aucun produit ne correspond." : "Aucun produit pour l'instant."));
+  list.forEach(p => {
+    const r = el("button", "prow"), sw = el("span", "sw"), pn = el("span", "pn", p.name);
+    sw.style.background = `var(--t${(p.color || 0) % NCOLORS})`;
+    pn.append(el("small", null, [p.cat, p.unit === "kg" ? "au kilo" : "à l'unité", codesOf(p).length ? (codesOf(p).length > 1 ? codesOf(p).length + " codes-barres" : "code " + codesOf(p)[0].ean) : "sans code-barres"].filter(Boolean).join(" · ")));
+    r.append(sw, pn); r.onclick = () => { fillForm(p); $("#main").scrollTop = 0; };
+    box.append(r);
+  });
+}
+$("#pq").addEventListener("input", e => { S.pq = e.target.value; renderProduits(); });
+function cleanCodes() {
+  const m = new Map();
+  S.fCodes.forEach(c => { const e = String(c.ean || "").replace(/\D/g, ""); if (!e) return; m.set(e, { ean: e }); });
+  return [...m.values()];
+}
+$("#pCancel").onclick = () => fillForm(null);
+$("#pSave").onclick = async () => {
+  const name = $("#pName").value.trim(); if (!name) { $("#pName").focus(); return; }
+  const id = S.editing || slug(($("#pCat").value.trim() || "x").slice(0, 4) + " " + name);
+  const old = S.products.find(x => x.id === id);
+  const data = { name, unit: $("#pUnit").value === "kg" ? "kg" : "u", cat: $("#pCat").value.trim(), codes: cleanCodes(), color: old ? (old.color || 0) : (categories().indexOf($("#pCat").value.trim()) + 6) % NCOLORS, updatedAt: new Date().toISOString() };
+  if (!S.db || S.readOnly) { toast("Impossible d'enregistrer ici", 3000); return; }
+  const was = !!S.editing; fillForm(null);
+  try { await tracked(S.db.collection("products").doc(id).set(data)); toast(was ? "Produit modifié" : "Produit ajouté"); } catch (e) { dbError(e, "produit non enregistré"); }
+};
+$("#pDel").onclick = e => armed(e.currentTarget, "Toucher encore pour supprimer", async () => {
+  const id = S.editing; fillForm(null); if (!id || !S.db) return;
+  try { await tracked(S.db.collection("products").doc(id).delete()); toast("Produit supprimé"); } catch (err) { dbError(err, "produit non supprimé"); }
+});
+
+function renderAll() { renderSync(); renderSaisie(); renderBilan(); renderProduits(); }
+
+/* ---------- data ---------- */
+function subscribeLines() {
+  if (!S.db) return;
+  if (S.unsubL) S.unsubL();
+  { const c = ls.get("cmd.lines", null); S.lines = c && c.day === S.day && Array.isArray(c.lines) ? c.lines : []; }
+  S.unsubL = S.db.collection("lignes").where("day", "==", S.day).limit(1000).onSnapshot(snap => {
+    S.lines = snap.docs.map(d => ({ id: d.id, ...d.data() })); ls.set("cmd.lines", { day: S.day, lines: S.lines }); renderSaisie();
+  }, err => { if (err.code === "unavailable") setTimeout(subscribeLines, 3000); });
+  if (S.unsubB) S.unsubB();
+  { const c = ls.get("cmd.bons", null); S.bons = c && c.day === S.day && Array.isArray(c.bons) ? c.bons : []; }
+  S.unsubB = S.db.collection("bons").where("day", "==", S.day).limit(500).onSnapshot(snap => {
+    S.bons = snap.docs.map(d => ({ id: d.id, ...d.data() })); ls.set("cmd.bons", { day: S.day, bons: S.bons }); renderSaisie();
+  }, () => {});
+}
+function subscribeProducts() {
+  S.db.collection("products").limit(500).onSnapshot(snap => {
+    S.dbState = "ok";
+    S.products = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p && typeof p.name === "string");
+    if (!snap.metadata || !snap.metadata.fromCache) ls.set("cmd.products", S.products);
+    renderAll();
+  }, err => { if (err.code === "unavailable") setTimeout(subscribeProducts, 3000); else { S.dbState = "off"; renderAll(); } });
+}
+function subscribeLots() {
+  S.db.collection("lots").limit(1000).onSnapshot(snap => {
+    const m = {}; snap.docs.forEach(d => { const a = d.data().active; if (Array.isArray(a)) m[d.id] = a.filter(x => typeof x === "string"); });
+    if (S.lotsDirty) Object.keys(S.lotsDirty).forEach(pid => m[pid] = activeLots(pid));
+    S.lots = m; ls.set("cmd.activeLots", m); if (!$("#sEntry").hidden) renderEntry();
+  }, err => { if (err.code === "unavailable") setTimeout(subscribeLots, 3000); });
+}
+function subscribeClients() {
+  S.db.collection("clients").limit(500).onSnapshot(snap => {
+    const local = S.clients.filter(c => c.pendingLocal);
+    const got = snap.docs.map(d => ({ id: d.id, name: d.data().name })).filter(c => typeof c.name === "string");
+    S.clients = got.concat(local.filter(c => !got.some(g => g.id === c.id)));
+    ls.set("cmd.clients", S.clients);
+    renderAll();
+  }, err => { if (err.code === "unavailable") setTimeout(subscribeClients, 3000); });
+}
+
+/* midnight rollover */
+setInterval(() => { const t = today(); if (S.lastToday && S.lastToday !== t && S.day === S.lastToday) { S.day = t; subscribeLines(); renderAll(); } S.lastToday = t; }, 60000);
+S.lastToday = today();
+
+let wake = null;
+async function keepAwake() { try { if (!wake && navigator.wakeLock && document.visibilityState === "visible") { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } } catch {} }
+document.addEventListener("pointerdown", keepAwake, { passive: true });
+
+const SEED = [{"id": "a-chipo-sechee-piece", "name": "Chipo séchée (pièce)", "unit": "u", "cat": "À l'unité", "color": 4, "codes": []}, {"id": "a-merguez-sechee-piece", "name": "Merguez séchée (pièce)", "unit": "u", "cat": "À l'unité", "color": 4, "codes": []}, {"id": "a-saucisse-seche-de-canard-piece", "name": "Saucisse sèche de canard (pièce)", "unit": "u", "cat": "À l'unité", "color": 4, "codes": []}, {"id": "cana-aiguillettes-de-canard", "name": "Aiguillettes de canard", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600026"}]}, {"id": "cana-canard-sans-foie", "name": "Canard sans foie", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": []}, {"id": "cana-cote-de-canard", "name": "Côte de canard", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600106"}]}, {"id": "cana-cou-farci-au-foie-gras", "name": "Cou farci au foie gras", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600037"}]}, {"id": "cana-cuisse-de-canard-confite", "name": "Cuisse de canard confite", "unit": "u", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600034"}]}, {"id": "cana-cuisse-de-canard-fraiche", "name": "Cuisse de canard fraîche", "unit": "u", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600025"}]}, {"id": "cana-foie-gras-frais-deveine", "name": "Foie gras frais dénervé", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600039"}]}, {"id": "cana-foie-gras-frais", "name": "Foie gras frais", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600029"}]}, {"id": "cana-foie-gras-mi-cuit-boule", "name": "Foie gras mi-cuit boule", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600028"}]}, {"id": "cana-foie-gras-mi-cuit-tranche", "name": "Foie gras mi-cuit tranché", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600155"}]}, {"id": "cana-foie-gras-mi-cuit", "name": "Foie gras mi-cuit boudin", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600048"}]}, {"id": "cana-friton-de-canard", "name": "Friton de canard", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600014"}]}, {"id": "cana-gesiers-de-canard-confits", "name": "Gésiers de canard confits", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600036"}]}, {"id": "cana-magret-frais", "name": "Magret frais", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600024"}]}, {"id": "cana-manchons-de-canard-confits-x2", "name": "Manchons de canard confits (x2)", "unit": "u", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600035"}]}, {"id": "cana-rillettes-de-canard", "name": "Rillettes de canard", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600132"}]}, {"id": "cana-steak-de-canard", "name": "Steak de canard", "unit": "kg", "cat": "Canard gras", "color": 3, "codes": [{"ean": "2600052"}]}, {"id": "char-andouilles", "name": "Andouilles", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600071"}]}, {"id": "char-boudin-a-la-viande", "name": "Boudin à la viande", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600064"}]}, {"id": "char-carbonnade", "name": "Carbonnade", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600089"}]}, {"id": "char-chair-a-saucisse", "name": "Chair à saucisse", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600059"}]}, {"id": "char-chipolatas-sechees", "name": "Chipolatas séchées", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": []}, {"id": "char-chipolatas", "name": "Chipolatas", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600092"}]}, {"id": "char-confit-de-cochon", "name": "Confit de cochon", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600070"}]}, {"id": "char-coppa", "name": "Coppa", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": []}, {"id": "char-cotelettes-de-porc", "name": "Côtelettes de porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600076"}]}, {"id": "char-couenne", "name": "Couenne", "unit": "u", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600100"}]}, {"id": "char-filet-mignon", "name": "Filet mignon", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600084"}]}, {"id": "char-galantine-de-volaille", "name": "Galantine de volaille", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600072"}]}, {"id": "char-jambon-blanc", "name": "Jambon blanc", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600058"}]}, {"id": "char-jambon-de-pays-en-tranche", "name": "Jambon de pays en tranche", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600060"}]}, {"id": "char-jambon-de-pays-entier-avec-os", "name": "Jambon de pays entier avec os", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": []}, {"id": "char-jambon-de-pays-entier-desosse", "name": "Jambon de pays entier désossé", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": []}, {"id": "char-jarret-de-porc", "name": "Jarret de porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600082"}]}, {"id": "char-joue-de-porc-confit", "name": "Joue de porc confit", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600147"}]}, {"id": "char-langue-de-porc-confit", "name": "Langue de porc confit", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600148"}]}, {"id": "char-magret-seche-entier", "name": "Magret séché entier", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600030"}]}, {"id": "char-magret-seche-pretranche", "name": "Magret séché prétranché", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600031"}]}, {"id": "char-pate-de-campagne", "name": "Pâté de campagne", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600066"}]}, {"id": "char-pate-de-canard", "name": "Pâté de canard", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": []}, {"id": "char-pate-de-porc-au-foie-gras", "name": "Pâté de porc au foie gras", "unit": "kg", "cat": "Charcuterie cuite", "color": 5, "codes": [{"ean": "2600067"}]}, {"id": "char-pied-de-porc", "name": "Pied de porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600080"}]}, {"id": "char-poitrine-de-porc-tranchee", "name": "Poitrine de porc tranchée", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600134"}]}, {"id": "char-preparation-type-merguez-sechees", "name": "Préparation type merguez séchées", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": []}, {"id": "char-preparation-type-merguez", "name": "Préparation type merguez", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600118"}]}, {"id": "char-quart-de-jambon-de-pays", "name": "Quart de jambon de pays", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600107"}]}, {"id": "char-roti-de-porc", "name": "Rôti de porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600077"}]}, {"id": "char-saucisse-de-canard", "name": "Saucisse de canard", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600062"}]}, {"id": "char-saucisse-de-porc-au-foie-gras", "name": "Saucisse de porc au foie gras", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600165"}]}, {"id": "char-saucisse-pur-porc-fine", "name": "Saucisse pur porc fine", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600130"}]}, {"id": "char-saucisse-pur-porc", "name": "Saucisse pur porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600061"}]}, {"id": "char-saucisse-seche-de-canard", "name": "Saucisse sèche de canard", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600116"}]}, {"id": "char-saucisse-seche-de-foie", "name": "Saucisse sèche de foie", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600117"}]}, {"id": "char-saucisse-seche-de-porc", "name": "Saucisse sèche de porc", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600115"}]}, {"id": "char-saucisson-de-canard", "name": "Saucisson de canard", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600090"}]}, {"id": "char-saucisson-de-porc", "name": "Saucisson de porc", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600063"}]}, {"id": "char-talon-de-jambon-de-pays", "name": "Talon de jambon de pays", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600057"}]}, {"id": "char-travers-de-porc", "name": "Travers de porc", "unit": "kg", "cat": "Charcuterie fraîche", "color": 2, "codes": [{"ean": "2600083"}]}, {"id": "char-ventreche-plate-ou-roulee", "name": "Ventrèche (plate ou roulée)", "unit": "kg", "cat": "Charcuterie sèche", "color": 4, "codes": [{"ean": "2600074"}]}, {"id": "conf-cou-farci-400-g", "name": "Cou farci 400 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131049"}]}, {"id": "conf-cuisses-confites-x2-590-g", "name": "Cuisses confites (x2) 590 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131056"}]}, {"id": "conf-cuisses-confites-x4-950-g", "name": "Cuisses confites (x4) 950 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131063"}]}, {"id": "conf-gesiers-de-canard-confits-200-g", "name": "Gésiers de canard confits 200 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131100"}]}, {"id": "conf-gesiers-de-canard-confits-400-g", "name": "Gésiers de canard confits 400 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131117"}]}, {"id": "conf-magret-et-cuisse-confits-590-g", "name": "Magret et cuisse confits 590 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131087"}]}, {"id": "conf-magrets-confits-x2-590-g", "name": "Magrets confits (x2) 590 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131070"}]}, {"id": "conf-manchons-confits-750-g", "name": "Manchons confits 750 g", "unit": "u", "cat": "Confits", "color": 1, "codes": [{"ean": "3760260131094"}]}, {"id": "entr-friton-de-canard-200-g", "name": "Friton de canard 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131155"}]}, {"id": "entr-friton-de-porc-200-g", "name": "Friton de porc 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131278"}]}, {"id": "entr-galantine-de-volaille-200-g", "name": "Galantine de volaille 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": []}, {"id": "entr-galantine-de-volaille-400-g", "name": "Galantine de volaille 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": []}, {"id": "entr-gesiers-de-volaille-confits-200-g", "name": "Gésiers de volaille confits 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131254"}]}, {"id": "entr-gesiers-de-volaille-confits-400-g", "name": "Gésiers de volaille confits 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": []}, {"id": "entr-jambonneau-de-canard-200-g", "name": "Jambonneau de canard 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131162"}]}, {"id": "entr-jambonneau-de-canard-400-g", "name": "Jambonneau de canard 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131179"}]}, {"id": "entr-jambonneau-de-porc-200-g", "name": "Jambonneau de porc 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131308"}]}, {"id": "entr-jambonneau-de-porc-400-g", "name": "Jambonneau de porc 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131315"}]}, {"id": "entr-pate-de-campagne-200-g", "name": "Pâté de campagne 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": []}, {"id": "entr-pate-de-campagne-400-g", "name": "Pâté de campagne 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": []}, {"id": "entr-pate-de-canard-200-g", "name": "Pâté de canard 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131124"}]}, {"id": "entr-pate-de-canard-400-g", "name": "Pâté de canard 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131131"}]}, {"id": "entr-pate-de-canard-au-foie-gras-180-g", "name": "Pâté de canard au foie gras 180 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131148"}]}, {"id": "entr-pate-de-foie-de-volaille-200-g", "name": "Pâté de foie de volaille 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131247"}]}, {"id": "entr-pate-de-porc-au-foie-gras-180-g", "name": "Pâté de porc au foie gras 180 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131322"}]}, {"id": "entr-rillettes-de-canard-200-g", "name": "Rillettes de canard 200 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131186"}]}, {"id": "entr-rillettes-de-canard-400-g", "name": "Rillettes de canard 400 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131193"}]}, {"id": "entr-rillettes-de-canard-au-foie-gras-180-g", "name": "Rillettes de canard au foie gras 180 g", "unit": "u", "cat": "Entrées conserve", "color": 0, "codes": [{"ean": "3760260131209"}]}, {"id": "foie-foie-de-canard-entier-100-g", "name": "Foie de canard entier 100 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260131001"}]}, {"id": "foie-foie-de-canard-entier-200-g", "name": "Foie de canard entier 200 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260131018"}]}, {"id": "foie-foie-de-canard-entier-300-g", "name": "Foie de canard entier 300 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260131025"}]}, {"id": "foie-foie-de-canard-entier-350-g", "name": "Foie de canard entier 350 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260130035"}]}, {"id": "foie-foie-de-canard-entier-400-g", "name": "Foie de canard entier 400 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260131032"}]}, {"id": "foie-foie-de-canard-entier-500-g", "name": "Foie de canard entier 500 g", "unit": "u", "cat": "Foie gras conserve", "color": 3, "codes": [{"ean": "3760260130042"}]}, {"id": "mwkjk42g5wewe", "name": "Graisse de Canard 300g", "unit": "u", "cat": "À l'unité", "color": 5, "codes": [{"ean": "3760260130004"}]}, {"id": "mwkjybzyrqtf5", "name": "Manchons confits", "unit": "u", "cat": "À l'unité", "color": 0, "codes": [{"ean": "9760260131094"}]}, {"id": "noel-chapon-eviscere-avec-abats", "name": "Chapon éviscéré avec abats", "unit": "kg", "cat": "Noël", "color": 1, "codes": []}, {"id": "noel-oie-evisceree-avec-abats", "name": "Oie éviscérée avec abats", "unit": "kg", "cat": "Noël", "color": 1, "codes": []}, {"id": "noel-roti-de-chapon-farci", "name": "Rôti de chapon farci", "unit": "kg", "cat": "Noël", "color": 1, "codes": []}, {"id": "noel-roti-de-magrets-fourre-au-foie-gras", "name": "Rôti de magrets fourré au foie gras", "unit": "kg", "cat": "Noël", "color": 1, "codes": []}, {"id": "plat-cassoulet-au-confit-1400-g", "name": "Cassoulet au confit 1400 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131391"}]}, {"id": "plat-cassoulet-au-confit-580-g", "name": "Cassoulet au confit 580 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131377"}]}, {"id": "plat-cassoulet-au-confit-780-g", "name": "Cassoulet au confit 780 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131384"}]}, {"id": "plat-haricots-a-la-tomate-750-g", "name": "Haricots à la tomate 750 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131407"}]}, {"id": "plat-lentilles-aux-jarrets-de-porc-1350-g", "name": "Lentilles aux jarrets de porc 1350 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": []}, {"id": "plat-lentilles-aux-jarrets-de-porc-750-g", "name": "Lentilles aux jarrets de porc 750 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131414"}]}, {"id": "plat-lentilles-cuisinees-750-g", "name": "Lentilles cuisinées 750 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131438"}]}, {"id": "plat-lentilles-saucisses-750-g", "name": "Lentilles saucisses 750 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": []}, {"id": "plat-magret-a-l-orange-450-g", "name": "Magret à l'orange 450 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": []}, {"id": "plat-magret-fourre-au-foie-gras-550-g", "name": "Magret fourré au foie gras 550 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131520"}]}, {"id": "plat-pintade-farcie-au-foie-gras-700-g", "name": "Pintade farcie au foie gras 700 g", "unit": "u", "cat": "Plats cuisinés", "color": 2, "codes": [{"ean": "3760260131537"}]}, {"id": "vola-blanc-de-poulet", "name": "Blanc de poulet", "unit": "kg", "cat": "Volailles", "color": 0, "codes": [{"ean": "2600012"}]}, {"id": "vola-cane-evisceree-avec-abats", "name": "Cane éviscérée avec abats", "unit": "kg", "cat": "Volailles", "color": 0, "codes": []}, {"id": "vola-cuisse-de-pintade", "name": "Cuisse de pintade", "unit": "kg", "cat": "Volailles", "color": 0, "codes": []}, {"id": "vola-cuisse-de-poulet", "name": "Cuisse de poulet", "unit": "kg", "cat": "Volailles", "color": 0, "codes": [{"ean": "2600011"}]}, {"id": "vola-pintade-evisceree-avec-abats", "name": "Pintade éviscérée avec abats", "unit": "kg", "cat": "Volailles", "color": 0, "codes": []}, {"id": "vola-poulet-eviscere-avec-abats", "name": "Poulet éviscéré avec abats", "unit": "kg", "cat": "Volailles", "color": 0, "codes": []}, {"id": "vola-supreme-de-pintade", "name": "Suprême de pintade", "unit": "kg", "cat": "Volailles", "color": 0, "codes": []}];
+/* ---------- local store: everything lives on this phone (IndexedDB), synced to Google Sheets when there is a network ---------- */
+const ST = { recs: {}, lastSrv: 0, url: "", code: "", device: "", lastSync: "", lastErr: "", seeded: false };
+const idb = {
+  open() { return new Promise((res, rej) => { try { const r = indexedDB.open("commandes-magasins", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); },
+  async get(k) { const d = await this.open(); return new Promise((res, rej) => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+  async set(k, v) { const d = await this.open(); return new Promise((res, rej) => { const tx = d.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
+};
+let persistT = 0;
+function persist() {
+  clearTimeout(persistT);
+  persistT = setTimeout(async () => {
+    try { await idb.set("state", ST); } catch { try { localStorage.setItem("cmd.state", JSON.stringify(ST)); } catch {} }
+  }, 300);
+}
+async function loadStore() {
+  let s = null;
+  try { s = await idb.get("state"); } catch {}
+  if (!s) { try { s = JSON.parse(localStorage.getItem("cmd.state") || "null"); } catch {} }
+  if (s && typeof s === "object") Object.assign(ST, s);
+  if (!ST.device) ST.device = "tel-" + rid();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
+}
+const K = (col, id) => col + "|" + id;
+const listeners = new Set();
+function notify(cols) { listeners.forEach(l => { if (!cols || cols.has(l.col)) l.run(); }); }
+function putRec(col, id, data, deleted) {
+  ST.recs[K(col, id)] = { col, id, data: deleted ? null : data, updatedAt: Date.now(), deleted: !!deleted, dirty: true };
+  persist(); notify(new Set([col])); scheduleSync(1500);
+}
+const OPS = { "==": (a, b) => a === b, ">=": (a, b) => a >= b, "<=": (a, b) => a <= b, ">": (a, b) => a > b, "<": (a, b) => a < b, "!=": (a, b) => a !== b };
+function rowsOf(col, where) {
+  const out = [];
+  for (const r of Object.values(ST.recs)) {
+    if (r.col !== col || r.deleted || !r.data) continue;
+    if (where.every(([f, op, v]) => (OPS[op] || (() => true))(r.data[f], v))) out.push(r);
+  }
+  return out.sort((a, b) => a.id < b.id ? -1 : 1);
+}
+function snapOf(rows) { return { metadata: { fromCache: false }, docs: rows.map(r => ({ id: r.id, data: () => r.data })) }; }
+function query(col, where) {
+  return {
+    where: (f, op, v) => query(col, where.concat([[f, op, v]])),
+    limit: () => query(col, where),
+    orderBy: () => query(col, where),
+    get: async () => snapOf(rowsOf(col, where)),
+    onSnapshot(next) { const l = { col, run: () => next(snapOf(rowsOf(col, where))) }; listeners.add(l); setTimeout(l.run, 0); return () => listeners.delete(l); },
+    doc: id => ({
+      set: async data => putRec(col, id, JSON.parse(JSON.stringify(data))),
+      update: async data => { const cur = ST.recs[K(col, id)]; putRec(col, id, Object.assign({}, cur && cur.data, JSON.parse(JSON.stringify(data)))); },
+      delete: async () => putRec(col, id, null, true)
+    })
+  };
+}
+const localDb = { collection: c => query(c, []) };
+
+/* first launch: the catalogue copied from the Caisse du stand */
+function seedProducts() {
+  if (ST.seeded) return;
+  ST.seeded = true;
+  if (!Object.values(ST.recs).some(r => r.col === "products")) {
+    SEED.forEach(p => { const { id, ...d } = p; ST.recs[K("products", id)] = { col: "products", id, data: d, updatedAt: 1, deleted: false, dirty: false, seed: true }; });
+  }
+  persist();
+}
+
+/* ---------- sync with the Google Sheet (Apps Script web app) ---------- */
+let syncing = false, syncT = 0;
+function scheduleSync(ms) { clearTimeout(syncT); syncT = setTimeout(syncNow, ms); }
+function dirtyCount() { let n = 0; for (const r of Object.values(ST.recs)) if (r.dirty) n++; return n; }
+async function syncNow() {
+  if (syncing) return;
+  if (!ST.url) { renderSync(); return; }
+  if (navigator.onLine === false) { S.offline = true; renderSync(); return; }
+  syncing = true; renderSync();
+  const changed = new Set();
+  try {
+    /* 1. send what this phone changed */
+    const dirty = Object.values(ST.recs).filter(r => r.dirty);
+    for (let i = 0; i < dirty.length; i += 200) {
+      const chunk = dirty.slice(i, i + 200), sent = chunk.map(r => r.updatedAt);
+      const res = await fetchJson(ST.url, { method: "POST", body: JSON.stringify({ code: ST.code, device: ST.device, records: chunk.map(r => ({ key: K(r.col, r.id), col: r.col, id: r.id, updatedAt: r.updatedAt, deleted: r.deleted, data: r.data })) }) });
+      if (!res.ok) throw new Error(res.error || "refus");
+      chunk.forEach((r, j) => { if (ST.recs[K(r.col, r.id)] === r && r.updatedAt === sent[j]) { r.dirty = false; delete r.seed; } });
+      persist();
+    }
+    /* 2. bring back what the other phones sent */
+    const first = !ST.lastSrv;
+    const res = await fetchJson(ST.url + (ST.url.includes("?") ? "&" : "?") + "code=" + encodeURIComponent(ST.code) + "&since=" + ST.lastSrv, { method: "GET" });
+    if (!res.ok) throw new Error(res.error || "refus");
+    let gotProducts = false;
+    (res.records || []).forEach(x => {
+      if (x.col === "products") gotProducts = true;
+      const k = K(x.col, x.id), cur = ST.recs[k];
+      if (cur && cur.dirty && cur.updatedAt > x.updatedAt) return;
+      ST.recs[k] = { col: x.col, id: x.id, data: x.deleted ? null : x.data, updatedAt: Number(x.updatedAt) || 0, deleted: !!x.deleted, dirty: false };
+      changed.add(x.col);
+    });
+    if (typeof res.max === "number" && res.max > ST.lastSrv) ST.lastSrv = res.max;
+    /* an empty sheet: this phone sends the catalogue once */
+    if (first && !gotProducts) { let n = 0; Object.values(ST.recs).forEach(r => { if (r.col === "products" && r.seed) { r.dirty = true; n++; } }); if (n) scheduleSync(500); }
+    ST.lastSync = new Date().toISOString(); ST.lastErr = ""; S.offline = false;
+  } catch (e) {
+    ST.lastErr = String((e && e.message) || e || "erreur");
+    if (navigator.onLine === false || /fetch|network|Load failed|timeout/i.test(ST.lastErr)) S.offline = true;
+  } finally {
+    syncing = false; persist(); renderSync();
+    if (changed.size) notify(changed);
+  }
+}
+async function fetchJson(url, opts) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 25000);
+  try {
+    const r = await fetch(url, Object.assign({ redirect: "follow", signal: ctl.signal }, opts, opts.method === "POST" ? { headers: { "Content-Type": "text/plain;charset=utf-8" } } : {}));
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch { throw new Error("Réponse illisible : vérifie l'adresse du tableau"); }
+  } catch (e) { if (e && e.name === "AbortError") throw new Error("timeout"); throw e; }
+  finally { clearTimeout(t); }
+}
+setInterval(() => scheduleSync(0), 30000);
+window.addEventListener("online", () => { S.offline = false; scheduleSync(0); });
+window.addEventListener("offline", () => { S.offline = true; renderSync(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(0); });
+
+function renderSync() {
+  const d = $("#syncDot"), n = dirtyCount();
+  const state = !ST.url ? "nosync" : S.offline ? "off" : (syncing || n) ? "pending" : ST.lastErr ? "err" : "ok";
+  d.className = "dot" + (state === "off" || state === "err" ? " off" : state === "pending" || state === "nosync" ? " pending" : "");
+  $("#syncLbl").textContent = state === "nosync" ? "Synchro à régler" : state === "off" ? "Hors ligne" + (n ? " · " + n : "") : state === "pending" ? "Envoi…" + (n ? " " + n : "") : state === "err" ? "Synchro en erreur" : "Synchronisé";
+  const b = $("#offBanner"); b.hidden = !(n && (S.offline || state === "err"));
+  b.textContent = n + (n > 1 ? " saisies sont gardées" : " saisie est gardée") + " sur ce téléphone. Elles partiront toutes seules au retour du réseau.";
+  if (!$("#sSync").hidden) renderSyncSheet();
+}
+function renderSyncSheet() {
+  const n = dirtyCount();
+  $("#syInfo").textContent = (ST.url ? (ST.lastSync ? "Dernière synchro : " + new Date(ST.lastSync).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Jamais synchronisé") : "Pas encore relié au tableau Google Sheets.") +
+    (n ? " · " + n + " en attente d'envoi" : "") + (ST.lastErr ? " · Dernière erreur : " + ST.lastErr : "");
+}
+$("#syncBtn").addEventListener("click", () => { $("#syUrl").value = ST.url; $("#syCode").value = ST.code; renderSyncSheet(); openSheet("sSync"); });
+$("#sySave").addEventListener("click", () => {
+  const u = $("#syUrl").value.trim();
+  if (u && !/^https:\/\/script\.google(usercontent)?\.com\//.test(u)) { toast("L'adresse doit commencer par https://script.google.com/", 4000); return; }
+  if (u !== ST.url) ST.lastSrv = 0;
+  ST.url = u; ST.code = $("#syCode").value.trim(); ST.lastErr = ""; showBanner(""); persist(); renderSync(); toast(u ? "Synchro réglée, envoi en cours" : "Synchro désactivée"); scheduleSync(0);
+});
+$("#syNow").addEventListener("click", () => { S.offline = false; scheduleSync(0); toast("Synchro lancée"); });
+
+/* Excel files: a normal download on the phone */
+const localDownloads = {
+  async save({ filename, data }) {
+    const url = URL.createObjectURL(data), a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+};
+
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) { window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); }); }
+
+async function boot() {
+  await loadStore(); seedProducts();
+  S.db = localDb; S.downloads = localDownloads; S.uid = ST.device; S.dbState = "ok";
+  subscribeProducts(); subscribeClients(); subscribeLots(); subscribeLines(); renderAll(); flush(); syncClients();
+  if (!ST.url) showBanner("Appli prête, tout est gardé sur ce téléphone. Pour partager entre téléphones, touche « Synchro à régler » en haut.");
+  scheduleSync(500);
+}
+boot();
+})();
+</script>
+</body>
+</html>
