@@ -494,7 +494,9 @@ function allBons() {
   return S.bons.concat(S.outbox.filter(o => o.col === "bons" && o.doc.day === S.day && !have.has(o.id)).map(o => ({ id: o.id, ...o.doc, waiting: true })));
 }
 function closedIds() { const s = new Set(); allBons().forEach(b => (b.ids || []).forEach(i => s.add(i))); return s; }
-function curLines() { const c = closedIds(); return allLines().filter(l => l.type === S.view && l.client === S.client && !c.has(l.id)); }
+/* chaque téléphone a son propre bon en cours (les saisies des autres vont quand même dans le bilan et l'export) */
+const isMine = x => !x.by || !S.uid || x.by === S.uid;
+function curLines() { const c = closedIds(); return allLines().filter(l => l.type === S.view && l.client === S.client && !c.has(l.id) && isMine(l)); }
 function groups(list) {
   const prods = new Map();
   list.slice().sort((a, b) => a.name.localeCompare(b.name, "fr") || String(a.lot).localeCompare(String(b.lot)) || (a.at || "").localeCompare(b.at || "")).forEach(r => {
@@ -549,7 +551,7 @@ $("#openBon").onclick = () => { renderBon(); openSheet("sBon"); };
 function renderBon() {
   const mode = S.view, mine = curLines();
   $("#bonTitle").textContent = "Bon " + LABEL[mode].toLowerCase() + " · " + S.client;
-  $("#bonSub").textContent = pDay(S.day).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " · tout ce qui a été scanné ou noté sur ce bon.";
+  $("#bonSub").textContent = pDay(S.day).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) + " · ce qui a été scanné ou noté sur ce téléphone. Tout part dans le même bilan.";
   const list = $("#lines"); list.replaceChildren();
   const gs = groups(mine);
   if (!gs.length) list.append(el("div", "empty", "Rien de saisi pour l'instant. Scanne une étiquette ou touche un produit."));
@@ -579,7 +581,7 @@ function renderBon() {
   const k = $("#dayKpis"); k.replaceChildren();
   [["Produits", String(gs.length)], ["Quantité", qTxt(tq)], ["Poids", tk ? kgTxt(tk) : "–"]].forEach(([l, v]) => { const d = el("div", "kpi"); d.append(el("span", "label", l), el("b", null, v)); k.append(d); });
   $("#bonFinish").disabled = !mine.length; if ($("#bonFinish").dataset.armed !== "1") { $("#bonFinish").textContent = "Terminer le bon"; $("#bonFinish").classList.remove("armed"); }
-  const done = allBons().filter(b => b.type === mode && b.client === S.client).sort((a, b) => (a.closedAt || "").localeCompare(b.closedAt || ""));
+  const done = allBons().filter(b => b.type === mode && b.client === S.client && isMine(b)).sort((a, b) => (a.closedAt || "").localeCompare(b.closedAt || ""));
   $("#bonDoneWrap").hidden = !done.length; const dl = $("#bonDone"); dl.replaceChildren();
   done.forEach(b => {
     const c = el("div", "card"); c.append(el("h3", null, "Terminé à " + hhmm(b.closedAt) + (b.waiting ? " · en attente du réseau" : "")));
