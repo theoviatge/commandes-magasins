@@ -892,7 +892,9 @@ function period() {
   }
   const a = new Date(d); a.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const b = new Date(a); b.setDate(a.getDate() + 6);
   const f = x => x.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-  return { from: dayOf(a), to: dayOf(b), label: "Semaine du " + f(a) + " au " + f(b), file: "semaine_" + dayOf(a) };
+  const th = new Date(a); th.setDate(a.getDate() + 3); const j4 = new Date(th.getFullYear(), 0, 4);
+  const wk = 1 + Math.round(((th - j4) / 86400000 - 3 + ((j4.getDay() + 6) % 7)) / 7);
+  return { from: dayOf(a), to: dayOf(b), label: "Semaine " + wk + " · du " + f(a) + " au " + f(b), file: "semaine_" + dayOf(a), name: "Bilan semaine " + wk + " - " + th.getFullYear() };
 }
 function shiftPeriod(n) {
   const d = pDay(S.bRef);
@@ -1062,7 +1064,7 @@ $("#bXlsx").onclick = async () => {
   tree.forEach(C => sheets.push(part(C, "vq", "vk", "Ventes"), part(C, "rq", "rk", "Retours")));
   if (!sheets.length) { toast("Rien à exporter sur cette période", 3000); return; }
   const blob = xlsxBlob(sheets);
-  const fn = ["bilan", P.file, S.bClient ? slug(S.bClient) : ""].filter(Boolean).join("_") + ".xlsx";
+  const fn = (P.name ? P.name + (S.bClient ? " - " + S.bClient.replace(/[\\/:*?"<>|]/g, " ") : "") : ["bilan", P.file, S.bClient ? slug(S.bClient) : ""].filter(Boolean).join("_")) + ".xlsx";
   try { await S.downloads.save({ filename: fn, data: blob }); }
   catch (e) { if (e && e.code !== "declined") toast("Téléchargement impossible ici"); }
 };
