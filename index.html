@@ -298,7 +298,7 @@ table.rec tr.pn td { font-weight: 700; padding-top: 12px; border-bottom: 0; font
     <div class="sheet-head"><h2 id="eTitle">Produit</h2><button class="x" data-close aria-label="Fermer">×</button></div>
     <div><span class="tag" id="eTag">Vente</span> <span class="hint" id="eInfo"></span></div>
     <div class="efields">
-      <div class="field"><label class="label" for="eQty">Quantité</label><input id="eQty" class="big" inputmode="decimal" autocomplete="off" data-kp></div>
+      <div class="field"><label class="label" for="eQty" id="eQtyLbl">Quantité</label><input id="eQty" class="big" inputmode="decimal" autocomplete="off" data-kp></div>
       <div class="field"><label class="label" for="eKg">Poids (kg)</label><input id="eKg" class="big" inputmode="decimal" placeholder="0,000" autocomplete="off" data-kp></div>
       <div class="field full"><label class="label" for="eLot">Lot</label><input id="eLot" class="big lotin" maxlength="20" placeholder="1313" autocomplete="off" data-kp></div>
     </div>
@@ -629,9 +629,19 @@ function renderLotChoices() {
   });
   if (list.length) { const n = el("button", "btn", "+ Nouveau lot"); n.type = "button"; n.style.padding = "10px"; n.onclick = () => { $("#eLot").value = ""; S.kpField = "eLot"; renderEntry(); }; box.append(n); }
 }
+/* prix au kilo de la caisse, servent seulement à retrouver le poids écrit dans l'étiquette de balance (jamais affichés) */
+const PRICE_KG = {"cana-aiguillettes-de-canard":2500,"cana-canard-sans-foie":550,"cana-cote-de-canard":2500,"cana-cou-farci-au-foie-gras":7000,"cana-foie-gras-frais-deveine":5200,"cana-foie-gras-frais":4700,"cana-foie-gras-mi-cuit-boule":8900,"cana-foie-gras-mi-cuit-tranche":9900,"cana-foie-gras-mi-cuit":8900,"cana-friton-de-canard":1995,"cana-gesiers-de-canard-confits":2400,"cana-magret-frais":2300,"cana-rillettes-de-canard":1995,"cana-steak-de-canard":2500,"char-andouilles":970,"char-boudin-a-la-viande":980,"char-carbonnade":1400,"char-chair-a-saucisse":895,"char-chipolatas-sechees":2500,"char-chipolatas":1160,"char-confit-de-cochon":1095,"char-coppa":2995,"char-cotelettes-de-porc":995,"char-filet-mignon":1800,"char-galantine-de-volaille":1550,"char-jambon-blanc":1900,"char-jambon-de-pays-en-tranche":2500,"char-jambon-de-pays-entier-avec-os":1000,"char-jambon-de-pays-entier-desosse":1450,"char-jarret-de-porc":600,"char-joue-de-porc-confit":2295,"char-langue-de-porc-confit":1695,"char-magret-seche-entier":3995,"char-magret-seche-pretranche":5300,"char-pate-de-campagne":1090,"char-pate-de-canard":1630,"char-pate-de-porc-au-foie-gras":2000,"char-pied-de-porc":130,"char-poitrine-de-porc-tranchee":1200,"char-preparation-type-merguez-sechees":2500,"char-preparation-type-merguez":1160,"char-quart-de-jambon-de-pays":1950,"char-roti-de-porc":1095,"char-saucisse-de-canard":1500,"char-saucisse-de-porc-au-foie-gras":1710,"char-saucisse-pur-porc-fine":1160,"char-saucisse-pur-porc":995,"char-saucisse-seche-de-canard":2500,"char-saucisse-seche-de-foie":2200,"char-saucisse-seche-de-porc":2200,"char-saucisson-de-canard":2500,"char-saucisson-de-porc":2300,"char-talon-de-jambon-de-pays":1160,"char-travers-de-porc":850,"char-ventreche-plate-ou-roulee":1895,"noel-chapon-eviscere-avec-abats":1395,"noel-oie-evisceree-avec-abats":1430,"noel-roti-de-chapon-farci":2995,"noel-roti-de-magrets-fourre-au-foie-gras":2995,"vola-blanc-de-poulet":2090,"vola-cane-evisceree-avec-abats":865,"vola-cuisse-de-pintade":1690,"vola-cuisse-de-poulet":1250,"vola-pintade-evisceree-avec-abats":1095,"vola-poulet-eviscere-avec-abats":795,"vola-supreme-de-pintade":2090};
+function labelKg(p, code, perKg) {
+  if (!/^2\d{12}$/.test(code || "")) return null;
+  const cents = parseInt(code.slice(7, 12), 10), pk = perKg || p.price || PRICE_KG[p.id] || 0;
+  if (!(cents > 0) || !(pk > 0)) return null;
+  return Math.round(cents * 1000 / pk) / 1000;
+}
 function openEntry(p, code, perKg) {
   if (!S.client) { toast("Choisis d'abord le client", 3000); return; }
-  const kg = null;
+  const kg = labelKg(p, code, perKg);
+  $("#eQtyLbl").textContent = p.unit === "kg" ? "Nombre de pièces" : "Quantité";
+  if (!kg && /^2\d{12}$/.test(code || "") && p.unit === "kg") setTimeout(() => toast("Poids pas lisible sur cette étiquette : tape le poids. (Ajoute le prix au kilo du code dans Produits pour qu'il se mette tout seul.)", 6000), 300);
   S.entry = { p, code: code || "" };
   $("#eTitle").textContent = p.name; $("#eTag").textContent = LABEL[S.view];
   $("#eInfo").textContent = S.client + (kg ? " · poids lu sur l'étiquette, à vérifier" : "");
@@ -1049,11 +1059,13 @@ function renderCodes() {
   const box = $("#pCodes"); box.replaceChildren();
   if (!S.fCodes.length) box.append(el("p", "hint", "Aucun code-barres pour l'instant."));
   S.fCodes.forEach((c, i) => {
-    const r = el("div", "coderow"), a = el("input"), x = el("button", null, "Retirer"); r.style.gridTemplateColumns = "minmax(0, 1fr) auto";
+    const r = el("div", "coderow"), a = el("input"), pr = el("input"), x = el("button", null, "Retirer"); r.style.gridTemplateColumns = "minmax(0, 1fr) 92px auto";
     a.inputMode = "numeric"; a.maxLength = 20; a.placeholder = "Code"; a.value = c.ean; a.setAttribute("aria-label", "Code-barres " + (i + 1));
     a.oninput = () => c.ean = a.value.replace(/\D/g, ""); x.type = "button";
+    pr.inputMode = "decimal"; pr.placeholder = "€/kg"; pr.value = c.price ? fr(c.price / 100, 2) : ""; pr.setAttribute("aria-label", "Prix au kilo de l'étiquette, sert à lire le poids");
+    pr.oninput = () => { const v = num(pr.value); c.price = v > 0 ? Math.round(v * 100) : 0; };
     x.onclick = () => { S.fCodes.splice(i, 1); renderCodes(); };
-    r.append(a, x); box.append(r);
+    r.append(a, pr, x); box.append(r);
   });
 }
 $("#pAddCode").onclick = () => { S.fCodes.push({ ean: "" }); renderCodes(); const ins = $$("#pCodes .coderow input"); if (ins.length) ins[ins.length - 1].focus(); };
@@ -1062,7 +1074,7 @@ function fillForm(p) {
   $("#pFormTitle").textContent = p ? "Modifier · " + p.name : "Ajouter un produit";
   $("#pName").value = p ? p.name : "";
   $("#pCat").value = p ? (p.cat || "") : ""; $("#pUnit").value = p && p.unit === "kg" ? "kg" : "u";
-  S.fCodes = p ? codesOf(p).map(c => ({ ean: c.ean })) : []; renderCodes();
+  S.fCodes = p ? codesOf(p).map(c => ({ ean: c.ean, price: c.price || 0 })) : []; renderCodes();
   $("#pSave").textContent = p ? "Enregistrer" : "Ajouter"; $("#pCancel").hidden = !p; $("#pDel").hidden = !p;
 }
 function renderProduits() {
@@ -1082,7 +1094,7 @@ function renderProduits() {
 $("#pq").addEventListener("input", e => { S.pq = e.target.value; renderProduits(); });
 function cleanCodes() {
   const m = new Map();
-  S.fCodes.forEach(c => { const e = String(c.ean || "").replace(/\D/g, ""); if (!e) return; m.set(e, { ean: e }); });
+  S.fCodes.forEach(c => { const e = String(c.ean || "").replace(/\D/g, ""); if (!e) return; m.set(e, c.price > 0 ? { ean: e, price: c.price } : { ean: e }); });
   return [...m.values()];
 }
 $("#pCancel").onclick = () => fillForm(null);
