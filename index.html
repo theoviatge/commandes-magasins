@@ -1039,17 +1039,26 @@ function xlsxBlob(sheets) {
 $("#bXlsx").onclick = async () => {
   const P = period(), list = bilanLines(), tree = bilanTree(list), r3 = k => k ? Math.round(k * 1000) / 1000 : null;
   const title = "Bilan " + P.label + (S.bClient ? " · " + S.bClient : "");
-  const tot = [[title], [], ["Client", "Produit", "Lot", "Qté vendue", "Poids vendu (kg)", "Qté retour", "Poids retour (kg)", "Qté nette", "Poids net (kg)"]], bold = [0, 2];
-  tree.forEach(C => {
-    C.prods.forEach(Pr => {
-      Pr.lots.forEach(x => tot.push([C.name, Pr.name, String(x.lot), x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]));
-      if (Pr.lots.length > 1) { const x = Pr.tot; bold.push(tot.length); tot.push([C.name, "Total " + Pr.name, "", x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]); }
+  /* un onglet pour les ventes (livraisons), un onglet pour les retours, puis le détail */
+  const part = (q, k, lbl) => {
+    const rows = [[title + " · " + lbl], [], ["Client", "Produit", "Lot", "Quantité", "Poids (kg)"]], bold = [0, 2];
+    tree.forEach(C => {
+      let any = false, cq = 0, ck = 0;
+      C.prods.forEach(Pr => {
+        const lots = Pr.lots.filter(x => x[q] || x[k]); if (!lots.length) return;
+        lots.forEach(x => { rows.push([C.name, Pr.name, String(x.lot), x[q], r3(x[k])]); cq += x[q]; ck += x[k] || 0; });
+        if (lots.length > 1) { bold.push(rows.length); rows.push([C.name, "Total " + Pr.name, "", lots.reduce((s, x) => s + x[q], 0), r3(lots.reduce((s, x) => s + (x[k] || 0), 0))]); }
+        any = true;
+      });
+      if (any) { bold.push(rows.length); rows.push(["Total " + C.name, "", "", cq, r3(ck)]); rows.push([]); }
     });
-    const x = C.tot; bold.push(tot.length); tot.push(["Total " + C.name, "", "", x.vq, r3(x.vk), x.rq, r3(x.rk), x.vq - x.rq, r3(x.vk - x.rk)]); tot.push([]);
-  });
+    if (rows.length === 3) rows.push([lbl === "Ventes" ? "Aucune vente sur cette période" : "Aucun retour sur cette période"]);
+    return { rows, bold };
+  };
+  const V = part("vq", "vk", "Ventes"), R = part("rq", "rk", "Retours");
   const detail = [["Date", "Heure", "Client", "Type", "Produit", "Lot", "Quantité", "Poids (kg)", "Code-barres"]];
   list.slice().sort((a, b) => (a.day + a.at).localeCompare(b.day + b.at)).forEach(l => detail.push([l.day, hhmm(l.at), l.client, LABEL[l.type] || l.type, l.name, String(l.lot), l.qty, r3(l.kg), l.code || ""]));
-  const blob = xlsxBlob([{ name: "Totaux par lot", rows: tot, bold, cols: [22, 34, 12, 11, 15, 11, 15, 11, 14] }, { name: "Détail", rows: detail, bold: [0], cols: [12, 8, 22, 9, 34, 12, 10, 11, 16] }]);
+  const blob = xlsxBlob([{ name: "Ventes", rows: V.rows, bold: V.bold, cols: [22, 34, 12, 11, 13] }, { name: "Retours", rows: R.rows, bold: R.bold, cols: [22, 34, 12, 11, 13] }, { name: "Détail", rows: detail, bold: [0], cols: [12, 8, 22, 9, 34, 12, 10, 11, 16] }]);
   const fn = ["bilan", P.file, S.bClient ? slug(S.bClient) : ""].filter(Boolean).join("_") + ".xlsx";
   try { await S.downloads.save({ filename: fn, data: blob }); }
   catch (e) { if (e && e.code !== "declined") toast("Téléchargement impossible ici"); }
