@@ -1,5 +1,5 @@
 /* Commandes magasins : garde l'appli sur le téléphone pour l'ouvrir sans réseau. */
-const VERSION = "cm-v1";
+const VERSION = "cm-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-180.png"];
 
 self.addEventListener("install", e => {

@@ -1197,7 +1197,7 @@ function renderSyncSheet() {
 $("#syncBtn").addEventListener("click", () => { $("#syUrl").value = ST.url; $("#syCode").value = ST.code; renderSyncSheet(); openSheet("sSync"); });
 $("#sySave").addEventListener("click", () => {
   const u = $("#syUrl").value.trim();
-  if (u && !/^https:\/\/script\.google(usercontent)?\.com\//.test(u)) { toast("L'adresse doit commencer par https://script.google.com/", 4000); return; }
+  if (u && !/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[^/]+\/exec$/.test(u)) { toast("Il faut l'adresse de l'application Web : https://script.google.com/macros/s/…/exec (pas celle de l'éditeur)", 6000); return; }
   if (u !== ST.url) ST.lastSrv = 0;
   ST.url = u; ST.code = $("#syCode").value.trim(); ST.lastErr = ""; showBanner(""); persist(); renderSync(); toast(u ? "Synchro réglée, envoi en cours" : "Synchro désactivée"); scheduleSync(0);
 });
