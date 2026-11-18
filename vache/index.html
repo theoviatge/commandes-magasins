@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pesées vache</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a2731">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vache">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #f4efea; --surface: #ffffff; --ink: #2a1a1c; --muted: #6e5f60; --line: #e0d5cf;
+  --accent: #7a2731; --accent-ink: #ffffff; --ok: #2f7d55; --warn: #b07a10; --warn-soft: #fbefd3; --danger: #b4372f;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --gl: max(16px, env(safe-area-inset-left, 0px)); --gr: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1a1314; --surface: #261c1d; --ink: #f1e7e5; --muted: #ad9c9a; --line: #3d2e2f;
+  --accent: #e07a86; --accent-ink: #1a0b0d; --ok: #6cc79a; --warn: #f0b740; --warn-soft: #3a2f14; --danger: #ef7a70; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #1a1314; --surface: #261c1d; --ink: #f1e7e5; --muted: #ad9c9a; --line: #3d2e2f;
+  --accent: #e07a86; --accent-ink: #1a0b0d; --ok: #6cc79a; --warn: #f0b740; --warn-soft: #3a2f14; --danger: #ef7a70; color-scheme: dark; }
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.4 var(--f-body); overflow: hidden; -webkit-text-size-adjust: 100%; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+#app { height: 100%; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.g { padding-left: var(--gl); padding-right: var(--gr); }
+header { flex: none; display: flex; align-items: center; gap: 10px; padding-block: 12px 8px; }
+header h1 { margin: 0; flex: 1; font: 800 1.35rem/1 var(--f-display); letter-spacing: -.01em; }
+header h1 small { display: block; font: 400 .8rem var(--f-body); color: var(--muted); margin-top: 3px; }
+.hbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: .9rem; }
+main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-block: 6px 18px; display: flex; flex-direction: column; gap: 12px; }
+.shoot { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.shoot label { display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 16px; background: var(--accent); color: var(--accent-ink); padding: 20px 14px; font: 800 1.2rem var(--f-display); cursor: pointer; }
+.shoot label.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--line); font: 700 .95rem var(--f-body); padding: 14px; flex-direction: column; gap: 2px; }
+.shoot svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.shoot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.hint { color: var(--muted); font-size: .9rem; text-align: center; margin: 0; }
+.empty { color: var(--muted); text-align: center; padding: 28px 10px; border: 2px dashed var(--line); border-radius: 14px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; border: 0; border-radius: 14px; background: var(--surface); padding: 8px 12px 8px 8px; }
+.item img { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; background: var(--line); display: block; }
+.item .nm { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.item .sub { font: 500 .82rem var(--f-num); color: var(--muted); margin-top: 3px; }
+.item .px { font: 600 1.05rem var(--f-num); text-align: right; white-space: nowrap; }
+.item.check { box-shadow: inset 0 0 0 2px var(--warn); }
+.item .flag { display: inline-block; margin-top: 4px; font-size: .75rem; font-weight: 700; color: var(--warn); }
+.item.busy .nm::after { content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 8px; border: 2px solid var(--muted); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .item.busy .nm::after { animation: none; } }
+.totbar { flex: none; border-top: 1px solid var(--line); background: var(--surface); padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+.totbar .lbl { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.totbar .big { font: 600 1.6rem/1.1 var(--f-num); color: var(--accent); text-align: right; }
+.totbar .kg { font: 600 1.05rem var(--f-num); }
+.totbar .acts { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 6px; }
+.btn { flex: 1; border: 0; border-radius: 12px; padding: 12px; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.btn.danger { background: none; color: var(--danger); border: 1px solid var(--line); }
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; background: rgb(0 0 0 / .45); }
+.panel { background: var(--bg); border-radius: 18px 18px 0 0; max-height: 94%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  padding: 18px var(--gr) calc(18px + env(safe-area-inset-bottom, 0px)) var(--gl); }
+.shead { display: flex; align-items: center; gap: 10px; }
+.shead h2 { margin: 0; flex: 1; font: 800 1.25rem/1.15 var(--f-display); }
+.x { border: 0; background: var(--surface); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; line-height: 1; }
+.photo { width: 100%; max-height: 42vh; object-fit: contain; border-radius: 12px; background: var(--surface); }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fields .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field span { font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.field input { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 11px 12px; width: 100%; min-width: 0; }
+.field input.num { font: 600 1.1rem var(--f-num); text-align: right; }
+.note { background: var(--warn-soft); border-radius: 10px; padding: 10px 12px; font-size: .9rem; }
+details { font-size: .85rem; color: var(--muted); }
+details pre { white-space: pre-wrap; font: .8rem/1.35 var(--f-num); background: var(--surface); padding: 10px; border-radius: 10px; margin: 6px 0 0; }
+.row { display: flex; gap: 8px; }
+.hist { display: flex; flex-direction: column; gap: 8px; }
+.hitem { background: var(--surface); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+.hitem b { font-family: var(--f-num); }
+.hitem .s { font-size: .85rem; color: var(--muted); }
+.hitem button { grid-row: span 2; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 12px; font-weight: 700; }
+.toast { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: .92rem; z-index: 40; max-width: calc(100% - 32px); text-align: center; }
+.status { font-size: .85rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="g">
+    <h1>Pesées vache<small id="bonDate"></small></h1>
+    <button class="hbtn" id="histBtn">Bons</button>
+  </header>
+  <main class="g">
+    <div class="shoot">
+      <label>
+        <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        Prendre une photo
+        <input type="file" accept="image/*" capture="environment" id="cam">
+      </label>
+      <label class="alt">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg>
+        Galerie
+        <input type="file" accept="image/*" multiple id="gal">
+      </label>
+    </div>
+    <p class="hint">Photographiez l'étiquette de pesée, bien à plat et nette. L'appli lit le poids et le prix toute seule.</p>
+    <div class="status" id="ocrStatus" hidden></div>
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty">Aucune photo pour ce bon.<br>Prenez la première étiquette en photo.</div>
+  </main>
+  <footer class="totbar g">
+    <div><div class="lbl" id="cnt">0 morceau</div><div class="kg" id="totKg">0,000 kg</div></div>
+    <div><div class="lbl" style="text-align:right">Total</div><div class="big" id="totEur">0,00 €</div></div>
+    <div class="acts"><button class="btn ghost" id="xlsBtn">Excel</button><button class="btn" id="endBtn">Terminer le bon</button></div>
+  </footer>
+</div>
+
+<div class="sheet" id="edit" hidden>
+  <div class="panel">
+    <div class="shead"><h2 id="eTitle">Morceau</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <img class="photo" id="ePhoto" alt="">
+    <div class="note" id="eNote" hidden></div>
+    <div class="fields">
+      <label class="field full"><span>Morceau</span><input id="eName" autocomplete="off"></label>
+      <label class="field"><span>Poids (kg)</span><input class="num" id="eKg" inputmode="decimal"></label>
+      <label class="field"><span>Prix au kg (€)</span><input class="num" id="ePpk" inputmode="decimal"></label>
+      <label class="field full"><span>Prix (€)</span><input class="num" id="eEur" inputmode="decimal"></label>
+    </div>
+    <details><summary>Texte lu sur la photo</summary><pre id="eRaw"></pre></details>
+    <div class="row"><button class="btn danger" id="eDel">Retirer</button><button class="btn ghost" id="eRetry">Relire</button><button class="btn" id="eOk">OK</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="hist" hidden>
+  <div class="panel">
+    <div class="shead"><h2>Bons terminés</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+    <div class="hist" id="histList"></div>
+  </div>
+</div>
+
+<script src="ocr/tesseract.min.js"></script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const el = (t, cls, txt) => { const e = document.createElement(t); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const fKg = n => (n == null ? "–" : n.toLocaleString("fr-FR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })) + " kg";
+const fEur = n => (n == null ? "–" : n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + " €";
+const r2 = n => Math.round(n * 100) / 100, r3 = n => Math.round(n * 1000) / 1000;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+let toastT; function toast(m) { let t = $(".toast"); if (!t) { t = el("div", "toast"); document.body.append(t); } t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+/* ---------- stockage sur le téléphone (IndexedDB) ---------- */
+const idb = {
+  db: null,
+  open() { return this.db || (this.db = new Promise((res, rej) => { const r = indexedDB.open("pesees-vache", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); },
+  async get(k) { const d = await this.open(); return new Promise((res, rej) => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+  async set(k, v) { const d = await this.open(); return new Promise((res, rej) => { const tx = d.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
+};
+const S = { bon: null, done: [] };
+const newBon = () => ({ id: uid(), start: new Date().toISOString(), items: [] });
+let saveT; const save = () => { clearTimeout(saveT); saveT = setTimeout(() => idb.set("state", S).catch(() => toast("Stockage plein ou bloqué")), 250); };
+
+/* ---------- lecture des photos (OCR sur le téléphone, marche sans réseau) ---------- */
+let workerP = null;
+function getWorker() {
+  if (!workerP) workerP = Tesseract.createWorker("fra", 1, { workerPath: "ocr/worker.min.js", corePath: "ocr/", langPath: "ocr/", gzip: true, cacheMethod: "none" })
+    .then(async w => { await w.setParameters({ preserve_interword_spaces: "1" }); return w; })
+    .catch(e => { workerP = null; throw e; });
+  return workerP;
+}
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+/* photo -> image nette pour la lecture (gris, contraste) + petite vignette pour la liste */
+async function prepare(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImg(url);
+    const sc = Math.min(1, 2200 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas"); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+    const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+    const photo = c.toDataURL("image/jpeg", .72);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data, hist = new Uint32Array(256);
+    for (let i = 0; i < p.length; i += 4) { const g = (p[i] * 299 + p[i + 1] * 587 + p[i + 2] * 114) / 1000 | 0; p[i] = g; hist[g]++; }
+    const n = p.length / 4; let lo = 0, hi = 255, acc = 0;
+    while (lo < 255 && (acc += hist[lo]) < n * .02) lo++; acc = 0;
+    while (hi > 0 && (acc += hist[hi]) < n * .02) hi--;
+    const k = 255 / Math.max(1, hi - lo);
+    for (let i = 0; i < p.length; i += 4) { const v = Math.max(0, Math.min(255, (p[i] - lo) * k)); p[i] = p[i + 1] = p[i + 2] = v; }
+    x.putImageData(d, 0, 0);
+    const ocr = c.toDataURL("image/png");
+    const t = document.createElement("canvas"), ts = 160 / Math.min(img.width, img.height);
+    t.width = Math.round(img.width * ts); t.height = Math.round(img.height * ts); t.getContext("2d").drawImage(img, 0, 0, t.width, t.height);
+    return { photo, ocr, thumb: t.toDataURL("image/jpeg", .7) };
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* ---------- comprendre le texte lu : poids, prix au kg, prix, nom du morceau ---------- */
+const CUTS = ["côte de bœuf", "entrecôte", "faux-filet", "faux filet", "filet", "rumsteck", "rumsteak", "bavette", "onglet", "hampe", "araignée", "poire", "merlan", "tende de tranche", "tranche", "rond de gîte", "gîte à la noix", "gîte", "macreuse", "paleron", "jumeau", "basse côte", "plat de côtes", "flanchet", "tendron", "collier", "jarret", "joue", "queue", "langue", "rognon", "foie", "cœur", "steak haché", "haché", "viande hachée", "steak", "rôti", "pot-au-feu", "pot au feu", "bourguignon", "sauté", "carpaccio", "tartare", "brochette", "saucisse", "merguez", "chipolata", "burger", "osso bucco", "aiguillette", "noix", "sous-noix", "épaule", "bœuf", "boeuf", "vache", "veau"];
+const strip = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/œ/g, "oe").toLowerCase();
+const NUM = /(\d{1,4})\s?[.,]\s?(\d{1,3})(?!\d)/g;
+function numsIn(line) { const out = []; let m; NUM.lastIndex = 0; while ((m = NUM.exec(line))) out.push({ v: parseFloat(m[1] + "." + m[2]), dec: m[2].length, i: m.index, end: m.index + m[0].length }); return out; }
+function cleanLine(l) {
+  return l.replace(/[|«»“”]/g, " ")
+    .replace(/\b\d{1,2}\s?[./-]\s?\d{1,2}\s?[./-]\s?\d{2,4}\b/g, " ") /* dates */
+    .replace(/\b\d{1,2}\s?[h:]\s?\d{2}\b/g, " ")                    /* heures */
+    .replace(/(\d)\s?[oO](?=\d)/g, "$10").replace(/(\d)[lI](?=\d)/g, "$11")
+    .replace(/k\s?[g9q]\b/gi, "kg").replace(/\bkgs?\b/gi, "kg").replace(/\s+/g, " ").trim();
+}
+function findTriple(nums) {
+  let best = null;
+  for (const w of nums) for (const p of nums) for (const t of nums) {
+    if (w === p || w === t || p === t) continue;
+    if (!(w.v > 0.005 && w.v < 80 && p.v >= 1 && p.v < 400 && t.v > 0)) continue;
+    const err = Math.abs(w.v * p.v - t.v);
+    if (err > Math.max(0.03, t.v * 0.004)) continue;
+    const score = err + (w.dec === 3 ? 0 : 0.5) + (t.dec === 2 ? 0 : 0.3) + (p.dec === 2 ? 0 : 0.2);
+    if (!best || score < best.score) best = { kg: w.v, ppk: p.v, eur: t.v, score };
+  }
+  return best;
+}
+function labeled(lines) {
+  const r = {};
+  lines.forEach((l, i) => {
+    const s = strip(l), ns = numsIn(l), next = numsIn(lines[i + 1] || "");
+    const pick = arr => arr.length ? arr[arr.length - 1].v : null;
+    if (r.ppk == null && /(\/\s?kg|par kg|au kg|le kg|e\s?kg|€\s?kg)/.test(s)) r.ppk = pick(ns) ?? pick(next);
+    else if (r.kg == null && /(poids|pds|net\b|masse)/.test(s) && !/(payer|prix|€)/.test(s)) r.kg = pick(ns) ?? pick(next);
+    else if (r.eur == null && /(a payer|prix|total|montant|ttc|net a)/.test(s) && !/kg/.test(s)) r.eur = pick(ns) ?? pick(next);
+    if (r.kg == null) { const m = l.match(/(\d{1,3}[.,]\d{1,3})\s?kg(?!\s?\/)/i); if (m) r.kg = parseFloat(m[1].replace(",", ".")); }
+    if (r.kg == null) { const m = l.match(/\b(\d{2,5})\s?g\b/); if (m && !/kg/i.test(l)) r.kg = parseInt(m[1]) / 1000; }
+    if (r.eur == null) { const m = l.match(/(\d{1,4}[.,]\d{2})\s?(€|eur)(?!\s?\/)/i); if (m && !/kg/i.test(l.slice(l.indexOf(m[0]) + m[0].length, l.indexOf(m[0]) + m[0].length + 4))) r.eur = parseFloat(m[1].replace(",", ".")); }
+  });
+  return r;
+}
+function guessName(lines) {
+  const all = strip(lines.join(" "));
+  for (const c of CUTS) if (all.includes(strip(c))) { const n = c.replace("boeuf", "bœuf"); if (!["bœuf", "vache", "veau"].includes(n)) return n[0].toUpperCase() + n.slice(1); }
+  const bad = /(poids|prix|kg|total|payer|date|emball|consom|lot|tare|net|ttc|tva|eur|€|origine|ne et|abattu|decoupe|elev|fr\s?\d|ce\b|tel|siret)/;
+  const cand = lines.map(l => l.replace(/[^A-Za-zÀ-ÿœŒ' -]/g, " ").replace(/\s+/g, " ").trim()).filter(l => l.length >= 4 && !bad.test(strip(l)) && /[a-zà-ÿ]{3}/i.test(l));
+  cand.sort((a, b) => b.length - a.length);
+  const n = cand[0] || "";
+  return n ? n[0].toUpperCase() + n.slice(1).toLowerCase() : "";
+}
+function parseText(text) {
+  const lines = text.split(/\n+/).map(cleanLine).filter(Boolean);
+  /* bon de livraison ou ticket à plusieurs lignes : chaque ligne qui tient debout seule (poids × prix/kg = prix) = un morceau */
+  const perLine = lines.map(l => ({ l, t: findTriple(numsIn(l)) })).filter(x => x.t);
+  if (perLine.length >= 2) return perLine.map(x => ({ name: guessName([x.l]) || x.l.replace(/[\d.,€]+|kg/gi, " ").trim().slice(0, 40), kg: x.t.kg, ppk: x.t.ppk, eur: x.t.eur, ok: true }));
+  const all = lines.flatMap(numsIn);
+  const t = findTriple(all), name = guessName(lines);
+  if (t) return [{ name, kg: t.kg, ppk: t.ppk, eur: t.eur, ok: true }];
+  const L = labeled(lines);
+  if (L.kg != null && L.ppk != null && L.eur == null) L.eur = r2(L.kg * L.ppk);
+  if (L.kg == null && L.ppk && L.eur != null) L.kg = r3(L.eur / L.ppk);
+  if (L.ppk == null && L.kg && L.eur != null) L.ppk = r2(L.eur / L.kg);
+  return [{ name, kg: L.kg ?? null, ppk: L.ppk ?? null, eur: L.eur ?? null, ok: false }];
+}
+
+/* ---------- photos -> morceaux ---------- */
+const queue = []; let running = false;
+async function addFiles(files) {
+  for (const f of files) {
+    const it = { id: uid(), at: new Date().toISOString(), name: "", kg: null, ppk: null, eur: null, busy: true, thumb: "" };
+    S.bon.items.unshift(it); render();
+    try { const p = await prepare(f); it.thumb = p.thumb; it.photo = p.photo; queue.push({ it, ocr: p.ocr }); }
+    catch { it.busy = false; it.err = "Photo illisible"; }
+    render(); save();
+  }
+  runQueue();
+}
+async function runQueue() {
+  if (running) return; running = true;
+  const st = $("#ocrStatus");
+  while (queue.length) {
+    const { it, ocr } = queue.shift();
+    st.hidden = false; st.textContent = "Lecture de la photo…" + (queue.length ? ` (encore ${queue.length})` : "");
+    try {
+      const w = await getWorker();
+      const { data } = await w.recognize(ocr);
+      it.raw = data.text;
+      const res = parseText(data.text);
+      /* nom du morceau pas trouvé (gros titre souvent raté) : 2e lecture en mode « texte épars » */
+      if (res.length === 1 && !res[0].name) {
+        await w.setParameters({ tessedit_pageseg_mode: "11" });
+        try { const d2 = (await w.recognize(ocr)).data.text; res[0].name = guessName(d2.split(/\n+/).map(cleanLine).filter(Boolean)); it.raw += "\n---\n" + d2; }
+        finally { await w.setParameters({ tessedit_pageseg_mode: "3" }); }
+      }
+      Object.assign(it, res[0], { busy: false, check: !res[0].ok });
+      if (res.length > 1) {
+        const at = S.bon.items.indexOf(it);
+        res.slice(1).forEach((r, k) => S.bon.items.splice(at + 1 + k, 0, { id: uid(), at: it.at, thumb: it.thumb, photo: it.photo, raw: it.raw, ...r, check: !r.ok }));
+      }
+    } catch (e) { it.busy = false; it.check = true; it.err = "Lecture impossible : " + (e && e.message || e); }
+    render(); save();
+  }
+  st.hidden = true; running = false;
+}
+async function retry(it) {
+  if (!it.photo) return;
+  const blob = await (await fetch(it.photo)).blob();
+  const p = await prepare(blob);
+  Object.assign(it, { busy: true, err: "" }); queue.push({ it, ocr: p.ocr }); render(); runQueue();
+}
+
+/* ---------- affichage ---------- */
+const totals = items => items.reduce((a, i) => ({ n: a.n + 1, kg: a.kg + (i.kg || 0), eur: a.eur + (i.eur || 0) }), { n: 0, kg: 0, eur: 0 });
+function render() {
+  const items = S.bon.items, L = $("#list");
+  L.replaceChildren(...items.map(it => {
+    const b = el("button", "item" + (it.busy ? " busy" : "") + (it.check && !it.busy ? " check" : ""));
+    const im = el("img"); im.alt = ""; if (it.thumb) im.src = it.thumb;
+    const mid = el("div"); mid.append(el("div", "nm", it.busy ? "Lecture…" : (it.name || "Morceau")), el("div", "sub", it.busy ? "" : fKg(it.kg) + (it.ppk ? " · " + fEur(it.ppk) + "/kg" : "")));
+    if (!it.busy && it.check) mid.append(el("div", "flag", it.err || "À vérifier : touchez pour voir"));
+    b.append(im, mid, el("div", "px", it.busy ? "" : fEur(it.eur)));
+    b.onclick = () => !it.busy && openEdit(it);
+    return b;
+  }));
+  $("#empty").hidden = items.length > 0;
+  const T = totals(items);
+  $("#cnt").textContent = T.n + (T.n > 1 ? " morceaux" : " morceau");
+  $("#totKg").textContent = fKg(r3(T.kg));
+  $("#totEur").textContent = fEur(r2(T.eur));
+  $("#bonDate").textContent = "Bon du " + new Date(S.bon.start).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+}
+const num = v => { v = String(v).replace(",", ".").replace(/[^\d.]/g, ""); return v === "" ? null : parseFloat(v); };
+let cur = null;
+function openEdit(it) {
+  cur = it;
+  $("#ePhoto").src = it.photo || it.thumb || "";
+  $("#eName").value = it.name || ""; $("#eKg").value = it.kg ?? ""; $("#ePpk").value = it.ppk ?? ""; $("#eEur").value = it.eur ?? "";
+  $("#eRaw").textContent = it.raw || "(rien)";
+  const n = $("#eNote"); n.hidden = !it.check; n.textContent = it.err || "Je n'ai pas réussi à tout lire sûrement. Vérifiez les chiffres avec la photo, ou reprenez une photo plus nette.";
+  $("#edit").hidden = false;
+}
+$("#eOk").onclick = () => {
+  const it = cur; it.name = $("#eName").value.trim(); it.kg = num($("#eKg").value); it.ppk = num($("#ePpk").value); it.eur = num($("#eEur").value);
+  if (it.eur == null && it.kg != null && it.ppk != null) it.eur = r2(it.kg * it.ppk);
+  it.check = it.kg == null || it.eur == null; it.err = "";
+  $("#edit").hidden = true; render(); save();
+};
+$("#eDel").onclick = () => { S.bon.items = S.bon.items.filter(x => x !== cur); $("#edit").hidden = true; render(); save(); };
+$("#eRetry").onclick = () => { $("#edit").hidden = true; retry(cur); };
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest(".sheet").hidden = true);
+document.querySelectorAll(".sheet").forEach(s => s.addEventListener("click", e => { if (e.target === s) s.hidden = true; }));
+["#cam", "#gal"].forEach(id => $(id).addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; if (f.length) addFiles(f); }));
+
+/* ---------- terminer, historique, Excel ---------- */
+$("#endBtn").onclick = () => {
+  if (!S.bon.items.length) return toast("Aucune photo dans ce bon");
+  if (S.bon.items.some(i => i.busy)) return toast("Attendez la fin de la lecture");
+  const b = S.bon; b.end = new Date().toISOString();
+  b.items.forEach(i => { delete i.photo; delete i.busy; });
+  S.done.unshift(b); S.bon = newBon(); render(); save(); toast("Bon terminé et rangé dans « Bons »");
+};
+$("#histBtn").onclick = () => {
+  const H = $("#histList");
+  H.replaceChildren(...(S.done.length ? S.done.map(b => {
+    const T = totals(b.items), d = el("div", "hitem");
+    d.append(el("b", "", fEur(r2(T.eur)) + " · " + fKg(r3(T.kg))), Object.assign(el("button", "", "Excel"), { onclick: () => exportXlsx(b) }),
+      el("div", "s", new Date(b.start).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " · " + T.n + " morceaux"));
+    return d;
+  }) : [el("div", "empty", "Aucun bon terminé pour l'instant.")]));
+  $("#hist").hidden = false;
+};
+$("#xlsBtn").onclick = () => S.bon.items.length ? exportXlsx(S.bon) : toast("Aucune photo dans ce bon");
+function exportXlsx(b) {
+  const day = new Date(b.start).toLocaleDateString("fr-FR");
+  const rows = [["Pesées vache · bon du " + day], [], ["Morceau", "Poids (kg)", "Prix au kg (€)", "Prix (€)", "À vérifier"]];
+  b.items.slice().reverse().forEach(i => rows.push([i.name || "Morceau", i.kg, i.ppk, i.eur, i.check ? "oui" : ""]));
+  const T = totals(b.items); rows.push([], ["TOTAL (" + T.n + " morceaux)", r3(T.kg), null, r2(T.eur)]);
+  const blob = xlsxBlob([{ name: "Bon " + day.replace(/\//g, "-"), rows, bold: [0, 2, rows.length - 1], cols: [34, 12, 15, 12, 11] }]);
+  const fn = "Pesées vache " + day.replace(/\//g, "-") + ".xlsx", file = new File([blob], fn, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: fn }).catch(() => {});
+  else { const a = el("a"); a.href = URL.createObjectURL(blob); a.download = fn; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+}
+/* petit fichier .xlsx fait maison (même méthode que l'appli Commandes) */
+function xlsxBlob(sheets) {
+  const enc = new TextEncoder(), esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const colL = i => { let s = ""; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const sheetXml = sh => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    (sh.cols ? "<cols>" + sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("") + "</cols>" : "") + "<sheetData>" +
+    sh.rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => v == null || v === "" ? "" : typeof v === "number"
+      ? `<c r="${colL(ci)}${ri + 1}"${sh.bold && sh.bold.includes(ri) ? ' s="1"' : ""}><v>${v}</v></c>`
+      : `<c r="${colL(ci)}${ri + 1}" t="inlineStr"${sh.bold && sh.bold.includes(ri) ? ' s="1"' : ""}><is><t xml:space="preserve">${esc(v)}</t></is></c>`).join("") + "</row>").join("") + "</sheetData></worksheet>";
+  const files = [
+    ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + "</Types>"],
+    ["_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ["xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+      sheets.map((s, i) => `<sheet name="${esc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("") + "</sheets></workbook>"],
+    ["xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("") +
+      `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ["xl/styles.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>'],
+    ...sheets.map((s, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(s)])
+  ];
+  const crcT = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crcT[n] = c >>> 0; }
+  const crc = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = crcT[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const parts = [], cen = []; let off = 0;
+  files.forEach(([name, txt]) => {
+    const nb = enc.encode(name), db = enc.encode(txt), c = crc(db);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, c, true); h.setUint32(18, db.length, true); h.setUint32(22, db.length, true); h.setUint16(26, nb.length, true);
+    const ce = new DataView(new ArrayBuffer(46));
+    ce.setUint32(0, 0x02014b50, true); ce.setUint16(4, 20, true); ce.setUint16(6, 20, true); ce.setUint16(8, 0x0800, true); ce.setUint32(16, c, true); ce.setUint32(20, db.length, true); ce.setUint32(24, db.length, true); ce.setUint16(28, nb.length, true); ce.setUint32(42, off, true);
+    parts.push(new Uint8Array(h.buffer), nb, db); cen.push(new Uint8Array(ce.buffer), nb);
+    off += 30 + nb.length + db.length;
+  });
+  const cenLen = cen.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cenLen, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+/* ---------- démarrage ---------- */
+(async () => {
+  try { const st = await idb.get("state"); if (st && st.bon) { S.bon = st.bon; S.done = st.done || []; } } catch {}
+  if (!S.bon) S.bon = newBon();
+  S.bon.items.forEach(i => { if (i.busy) { i.busy = false; i.check = true; i.err = "Lecture interrompue : touchez puis « Relire »"; } });
+  render();
+  setTimeout(() => getWorker().catch(() => {}), 1500); /* prépare la lecture en avance */
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+</script>
+</body>
+</html>
