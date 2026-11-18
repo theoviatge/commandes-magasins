@@ -1,0 +1,17 @@
+{
+  "name": "Pesées vache",
+  "short_name": "Vache",
+  "description": "Photos des étiquettes de pesée : poids et prix lus automatiquement, total du bon.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "vache",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4efea",
+  "theme_color": "#7a2731",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
